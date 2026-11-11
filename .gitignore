@@ -2,6 +2,11 @@
 .DS_Store
 Thumbs.db
 
+# Banco de dados SQLite vivo e segredos locais (NUNCA versionar)
+dados/
+backups/
+node_modules/
+
 # Logs e Ambientes
 *.log
 .env

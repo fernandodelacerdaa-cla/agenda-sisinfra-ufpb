@@ -1,0 +1,13 @@
+{
+  "name": "agenda-sisinfra-ufpb",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Agenda de Espaços Acadêmicos da PRG/UFPB (Node.js 22 + SQLite nativo)",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node --no-warnings server.js"
+  }
+}
