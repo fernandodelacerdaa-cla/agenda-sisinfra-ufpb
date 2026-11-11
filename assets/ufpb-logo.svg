@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" width="100%" height="100%">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCE082" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#AA7C11" />
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#003875" />
+      <stop offset="100%" stop-color="#002244" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- Escudo Boleado Português - Borda Dourada Externa -->
+    <path d="M 60,60 
+             L 340,60 
+             L 340,260 
+             C 340,360 270,410 200,435 
+             C 130,410 60,360 60,260 
+             Z" 
+          fill="url(#goldGrad)" 
+          stroke="#8A6508" 
+          stroke-width="3" />
+
+    <!-- Filete de separação branco/prata -->
+    <path d="M 68,68 
+             L 332,68 
+             L 332,258 
+             C 332,352 266,400 200,424 
+             C 134,400 68,352 68,258 
+             Z" 
+          fill="#FFFFFF" />
+
+    <!-- Campo Interno Azul Principal -->
+    <path d="M 74,74 
+             L 326,74 
+             L 326,256 
+             C 326,346 262,392 200,415 
+             C 138,392 74,346 74,256 
+             Z" 
+          fill="url(#blueGrad)" />
+
+    <!-- Faixas Ondadas na Base (Rio Paraíba) -->
+    <!-- Clip path para a base do escudo -->
+    <clipPath id="shieldBaseClip">
+      <path d="M 74,240 
+               L 326,240 
+               L 326,256 
+               C 326,346 262,392 200,415 
+               C 138,392 74,346 74,256 
+               Z" />
+    </clipPath>
+
+    <g clip-path="url(#shieldBaseClip)">
+      <!-- Fundo de água -->
+      <rect x="60" y="240" width="280" height="180" fill="#002D5A" />
+      
+      <!-- Onda 1 - Prata -->
+      <path d="M 60,270 Q 110,250 160,270 T 260,270 T 350,270 L 350,295 Q 300,275 260,295 T 160,295 T 60,295 Z" fill="#EAECEE" />
+      
+      <!-- Onda 2 - Azul -->
+      <path d="M 60,295 Q 110,275 160,295 T 260,295 T 350,295 L 350,320 Q 300,300 260,320 T 160,320 T 60,320 Z" fill="#003E7E" />
+      
+      <!-- Onda 3 - Prata -->
+      <path d="M 60,320 Q 110,300 160,320 T 260,320 T 350,320 L 350,345 Q 300,325 260,345 T 160,345 T 60,345 Z" fill="#EAECEE" />
+      
+      <!-- Onda 4 - Azul -->
+      <path d="M 60,345 Q 110,325 160,345 T 260,345 T 350,345 L 350,370 Q 300,350 260,370 T 160,370 T 60,370 Z" fill="#002B54" />
+      
+      <!-- Onda 5 - Prata na ponta -->
+      <path d="M 60,370 Q 110,350 160,370 T 260,370 T 350,370 L 350,420 L 60,420 Z" fill="#EAECEE" />
+    </g>
+
+    <!-- Besantes / Flocos de Prata (Estrelas / Círculos simbólicos UFPB) -->
+    <g fill="#FFFFFF" opacity="0.95">
+      <circle cx="108" cy="115" r="5" />
+      <circle cx="140" cy="98"  r="4" />
+      <circle cx="115" cy="155" r="4.5" />
+      <circle cx="135" cy="195" r="4" />
+      
+      <circle cx="292" cy="115" r="5" />
+      <circle cx="260" cy="98"  r="4" />
+      <circle cx="285" cy="155" r="4.5" />
+      <circle cx="265" cy="195" r="4" />
+
+      <circle cx="120" cy="235" r="3.5" />
+      <circle cx="280" cy="235" r="3.5" />
+    </g>
+
+    <!-- Flor de Lis Central em Ouro -->
+    <g transform="translate(200, 165) scale(0.95)">
+      <!-- Pétala Central -->
+      <path d="M 0,-68 
+               C 14,-50 22,-25 20,6 
+               C 10,8 5,12 0,22 
+               C -5,12 -10,8 -20,6 
+               C -22,-25 -14,-50 0,-68 Z" 
+            fill="url(#goldGrad)" 
+            stroke="#7C5905" 
+            stroke-width="1.5" />
+      
+      <!-- Linha central da pétala do meio -->
+      <path d="M 0,-60 L 0,15" stroke="#FFF5B8" stroke-width="2" stroke-linecap="round" />
+
+      <!-- Pétala Direita -->
+      <path d="M 12,-5 
+               C 26,-22 55,-35 62,-15 
+               C 66,2 45,20 22,22 
+               C 15,22 13,10 12,-5 Z" 
+            fill="url(#goldGrad)" 
+            stroke="#7C5905" 
+            stroke-width="1.5" />
+
+      <!-- Pétala Esquerda -->
+      <path d="M -12,-5 
+               C -26,-22 -55,-35 -62,-15 
+               C -66,2 -45,20 -22,22 
+               C -15,22 -13,10 -12,-5 Z" 
+            fill="url(#goldGrad)" 
+            stroke="#7C5905" 
+            stroke-width="1.5" />
+
+      <!-- Anel / Faixa Horizontal da Flor de Lis -->
+      <path d="M -26,18 L 26,18 C 28,26 24,30 18,31 L -18,31 C -24,30 -28,26 -26,18 Z" 
+            fill="url(#goldGrad)" 
+            stroke="#5E4302" 
+            stroke-width="1.5" />
+      <line x1="-24" y1="24.5" x2="24" y2="24.5" stroke="#FFEBA8" stroke-width="2" />
+
+      <!-- Base inferior da Flor de Lis -->
+      <path d="M -14,31 C -20,50 -6,56 0,60 C 6,56 20,50 14,31 Z" 
+            fill="url(#goldGrad)" 
+            stroke="#7C5905" 
+            stroke-width="1.5" />
+    </g>
+
+    <!-- Faixa Listel com Lema da UFPB -->
+    <g transform="translate(200, 435)">
+      <!-- Fita de fundo branca/prateada -->
+      <path d="M -160,0 
+               C -80,12 80,12 160,0 
+               L 150,28 
+               C 70,38 -70,38 -150,28 
+               Z" 
+            fill="#FFFFFF" 
+            stroke="url(#goldGrad)" 
+            stroke-width="2" />
+      
+      <!-- Pontas dobradas do listel -->
+      <path d="M -160,0 L -180,-12 L -170,14 L -150,28 Z" fill="#E2E8F0" stroke="#AA7C11" stroke-width="1" />
+      <path d="M 160,0 L 180,-12 L 170,14 L 150,28 Z" fill="#E2E8F0" stroke="#AA7C11" stroke-width="1" />
+
+      <!-- Texto: SAPIENTIA ÆDIFICAT -->
+      <text x="0" y="21" 
+            font-family="'Times New Roman', serif" 
+            font-size="14.5" 
+            font-weight="bold" 
+            letter-spacing="2.5" 
+            text-anchor="middle" 
+            fill="#002244">
+        SAPIENTIA ÆDIFICAT
+      </text>
+    </g>
+  </g>
+</svg>

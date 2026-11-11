@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Coleção de Auditórios (Auditório 1 e Auditório 2)
+    match /auditorios/{auditorioId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Coleção de Agendamentos
+    match /agendamentos/{agendamentoId} {
+      // Visualização pública permitida para consulta de calendário e disponibilidade
+      allow read: if true;
+      
+      // Criação permitida (se autenticado salva direto; se público cria solicitação pendente)
+      allow create: if true;
+      
+      // Edição, aprovação e exclusão exigem usuário autenticado da equipe
+      allow update, delete: if request.auth != null;
+    }
+
+    // Coleção de Usuários / Pessoas Autorizadas
+    match /usuarios/{usuarioId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}

@@ -1,0 +1,539 @@
+/* ===================================================================
+   SISTEMA DE AGENDAMENTO DE AUDITÓRIOS - CENTRAL DE AULAS
+   PRG / UNIVERSIDADE FEDERAL DA PARAÍBA (UFPB)
+   Identidade Visual Institucional - prg.ufpb.br
+   =================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&family=Rawline:wght@400;600;700&display=swap');
+
+:root {
+  /* Cores Oficiais UFPB / PRG */
+  --ufpb-blue-dark: #002244;
+  --ufpb-blue-primary: #003366;
+  --ufpb-blue-medium: #00509e;
+  --ufpb-blue-light: #e6f0fa;
+  --ufpb-gold-primary: #d4af37;
+  --ufpb-gold-hover: #b89628;
+  --ufpb-gold-light: #fef9e7;
+  --ufpb-gray-bg: #f8fafc;
+  --ufpb-gray-card: #ffffff;
+  --ufpb-border: #e2e8f0;
+  --ufpb-text-dark: #1e293b;
+  --ufpb-text-muted: #64748b;
+  
+  /* Auditório Cores */
+  --auditorio-1-color: #00509e;
+  --auditorio-1-light: #eff6ff;
+  --auditorio-1-border: #93c5fd;
+  --auditorio-2-color: #0d9488;
+  --auditorio-2-light: #f0fdf4;
+  --auditorio-2-border: #99f6e4;
+  --auditorio-3-color: #7c3aed;
+  --auditorio-3-light: #f5f3ff;
+  --auditorio-3-border: #ddd6fe;
+
+  /* Status Colors */
+  --status-confirmado: #16a34a;
+  --status-confirmado-bg: #dcfce7;
+  --status-pendente: #ea580c;
+  --status-pendente-bg: #ffedd5;
+  --status-cancelado: #dc2626;
+  --status-cancelado-bg: #fee2e2;
+
+  --font-main: 'Open Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: 'Rawline', 'Open Sans', sans-serif;
+}
+
+/* ===================================================================
+   TOGGLE SWITCH & CHECKLIST ITEMS (AGENDA SISINFRA)
+   =================================================================== */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: all 0.25s ease-in-out;
+  border-radius: 24px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: all 0.25s ease-in-out;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.switch-toggle input:checked + .switch-slider {
+  background-color: #00509e;
+}
+
+.switch-toggle input:checked + .switch-slider:before {
+  transform: translateX(20px);
+}
+
+.switch-toggle input:focus + .switch-slider {
+  box-shadow: 0 0 0 3px rgba(0, 80, 158, 0.25);
+}
+
+/* Checklist Card Item */
+.checklist-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: all 0.15s ease-in-out;
+}
+
+.checklist-item-row:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.checklist-item-row.is-active {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+/* SisInfra Badges */
+.badge-sisinfra {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badge-reservavel {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-restrito {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* Modo Alto Contraste (Diretrizes Acessibilidade Governo/UFPB) */
+body.alto-contraste {
+  --ufpb-blue-dark: #000000;
+  --ufpb-blue-primary: #000000;
+  --ufpb-blue-medium: #ffff00;
+  --ufpb-blue-light: #111111;
+  --ufpb-gold-primary: #ffff00;
+  --ufpb-gray-bg: #000000;
+  --ufpb-gray-card: #111111;
+  --ufpb-border: #ffff00;
+  --ufpb-text-dark: #ffffff;
+  --ufpb-text-muted: #e2e8f0;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.alto-contraste .bg-white,
+body.alto-contraste .bg-slate-50,
+body.alto-contraste .bg-gray-50,
+body.alto-contraste .bg-blue-50 {
+  background-color: #121212 !important;
+  color: #ffffff !important;
+  border-color: #ffff00 !important;
+}
+
+body.alto-contraste a,
+body.alto-contraste button {
+  color: #ffff00 !important;
+}
+
+body.alto-contraste .text-slate-600,
+body.alto-contraste .text-slate-500,
+body.alto-contraste .text-slate-700,
+body.alto-contraste .text-gray-600 {
+  color: #e2e8f0 !important;
+}
+
+/* Base */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--ufpb-gray-bg);
+  color: var(--ufpb-text-dark);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barra Superior de Acessibilidade / Padrão UFPB */
+.ufpb-top-bar {
+  background-color: var(--ufpb-blue-dark);
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  border-bottom: 2px solid var(--ufpb-gold-primary);
+}
+
+.ufpb-top-bar a {
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.ufpb-top-bar a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* Cabeçalho Principal Institucional PRG */
+.ufpb-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--ufpb-border);
+  box-shadow: 0 2px 4px rgba(0, 34, 68, 0.05);
+}
+
+.ufpb-brand-title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: var(--ufpb-blue-primary);
+  text-transform: uppercase;
+}
+
+.ufpb-brand-subtitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.ufpb-brand-unit {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+/* Barra de Navegação */
+.nav-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  white-space: nowrap;
+}
+
+.nav-tab-btn:hover {
+  color: var(--ufpb-blue-primary);
+  background-color: rgba(0, 51, 102, 0.04);
+}
+
+.nav-tab-btn.active {
+  color: var(--ufpb-blue-primary);
+  border-bottom-color: var(--ufpb-gold-primary);
+  background-color: rgba(0, 51, 102, 0.05);
+}
+
+/* Badges de Auditório */
+.badge-auditorio-1 {
+  background-color: var(--auditorio-1-light);
+  color: var(--auditorio-1-color);
+  border: 1px solid var(--auditorio-1-border);
+}
+
+.badge-auditorio-2 {
+  background-color: var(--auditorio-2-light);
+  color: var(--auditorio-2-color);
+  border: 1px solid var(--auditorio-2-border);
+}
+
+.badge-auditorio-3 {
+  background-color: var(--auditorio-3-light);
+  color: var(--auditorio-3-color);
+  border: 1px solid var(--auditorio-3-border);
+}
+
+/* Status Badges */
+.badge-confirmado {
+  background-color: var(--status-confirmado-bg);
+  color: var(--status-confirmado);
+}
+
+.badge-pendente {
+  background-color: var(--status-pendente-bg);
+  color: var(--status-pendente);
+}
+
+.badge-cancelado {
+  background-color: var(--status-cancelado-bg);
+  color: var(--status-cancelado);
+}
+
+/* Calendário Estilizado */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: var(--ufpb-border);
+  border: 1px solid var(--ufpb-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.calendar-header-cell {
+  background-color: #f1f5f9;
+  padding: 0.65rem 0.25rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.calendar-day-cell {
+  background-color: #ffffff;
+  min-height: 105px;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.15s ease;
+}
+
+.calendar-day-cell:hover {
+  background-color: #f8fafc;
+}
+
+.calendar-day-cell.other-month {
+  background-color: #f8fafc;
+  opacity: 0.45;
+}
+
+.calendar-day-cell.is-today {
+  background-color: #f0f7ff;
+}
+
+.calendar-day-cell.is-today .day-number {
+  background-color: var(--ufpb-blue-primary);
+  color: #ffffff;
+  border-radius: 9999px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-event-pill {
+  font-size: 0.7rem;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  line-height: 1.25;
+  font-weight: 500;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.calendar-event-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Modais */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-out;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-container {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  max-width: 680px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: scale(0.96);
+  transition: transform 0.2s ease-out;
+}
+
+.modal-overlay.active .modal-container {
+  transform: scale(1);
+}
+
+/* Toast Notificações */
+#toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  background-color: #ffffff;
+  color: #1e293b;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid var(--ufpb-blue-primary);
+  font-size: 0.875rem;
+  animation: slideInRight 0.25s ease-out;
+  min-width: 280px;
+  max-width: 420px;
+}
+
+.toast.toast-success { border-left-color: #16a34a; }
+.toast.toast-error { border-left-color: #dc2626; }
+.toast.toast-warning { border-left-color: #ea580c; }
+.toast.toast-info { border-left-color: var(--ufpb-blue-primary); }
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Rodapé */
+.ufpb-footer {
+  background-color: var(--ufpb-blue-dark);
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin-top: auto;
+  border-top: 3px solid var(--ufpb-gold-primary);
+}
+
+.ufpb-footer a {
+  color: #cbd5e1;
+  text-decoration: none;
+}
+
+.ufpb-footer a:hover {
+  color: var(--ufpb-gold-primary);
+  text-decoration: underline;
+}
+
+/* ===================================================================
+   FOLHA DE IMPRESSÃO - PAUTA DO DIA E COMPROVANTE OFICIAL
+   =================================================================== */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  .no-print,
+  .ufpb-top-bar,
+  .nav-tabs-container,
+  #demo-banner,
+  .btn,
+  #toast-container,
+  .modal-overlay:not(.active) {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-header {
+    border-bottom: 2px solid #000;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .print-header img,
+  .print-header svg {
+    width: 60px;
+    height: 60px;
+  }
+
+  .card {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    border: 1px solid #999 !important;
+    padding: 6px 8px !important;
+    font-size: 9.5pt !important;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+  }
+}

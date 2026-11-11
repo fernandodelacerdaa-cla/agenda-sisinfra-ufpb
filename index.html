@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda SisInfra - Gestão de Espaços e Infraestrutura | PRG / UFPB</title>
+  
+  <!-- Favicon com Brasão Oficial da UFPB -->
+  <link rel="icon" type="image/png" href="assets/ufpb-brasao.png">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ufpb: {
+              navy: '#002244',
+              blue: '#003366',
+              medium: '#00509e',
+              light: '#e6f0fa',
+              gold: '#d4af37',
+              goldHover: '#b89628',
+              goldLight: '#fef9e7'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Estilos Customizados Institucionais UFPB / PRG & Agenda SisInfra -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Firebase v10 Compat CDN (Carregamento direto sem dependência de bundler) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+  <!-- ================= BARRA SUPERIOR INSTITUCIONAL (GOV.BR / UFPB) ================= -->
+  <div class="ufpb-top-bar py-1.5 px-4 sm:px-8 flex flex-wrap items-center justify-between text-xs no-print">
+    <div class="flex items-center gap-4">
+      <a href="https://www.ufpb.br" target="_blank" rel="noopener" class="font-bold flex items-center gap-1">
+        <span>BRASIL</span> • <span>UFPB</span>
+      </a>
+      <span class="text-slate-500 hidden sm:inline">|</span>
+      <a href="https://sisinfra.ufpb.br" target="_blank" rel="noopener" class="font-bold text-amber-300 hover:text-white flex items-center gap-1 transition-colors" title="Catálogo de Infraestrutura da UFPB">
+        <span>🏛️</span> <span>SisInfra UFPB</span>
+      </a>
+      <span class="text-slate-500 hidden sm:inline">|</span>
+      <a href="https://www.prg.ufpb.br" target="_blank" rel="noopener" class="hidden sm:inline hover:underline">
+        Portal da PRG
+      </a>
+      <a href="https://sigaa.ufpb.br" target="_blank" rel="noopener" class="hidden md:inline hover:underline">
+        SIGAA
+      </a>
+      <a href="https://sipac.ufpb.br" target="_blank" rel="noopener" class="hidden md:inline hover:underline">
+        SIPAC
+      </a>
+    </div>
+
+    <!-- Ferramentas de Acessibilidade -->
+    <div class="flex items-center gap-3">
+      <span class="text-slate-400 hidden sm:inline text-[11px]">Acessibilidade:</span>
+      <button id="btn-toggle-contraste" class="hover:text-amber-300 font-semibold flex items-center gap-1 transition-colors" title="Alternar Alto Contraste">
+        ◐ <span>Alto Contraste</span>
+      </button>
+      <div class="flex items-center gap-1 ml-1 bg-slate-900/40 px-2 py-0.5 rounded text-[11px]">
+        <button id="btn-font-minus" class="hover:text-white font-bold px-1" title="Diminuir Fonte">A-</button>
+        <span class="text-slate-500">|</span>
+        <button id="btn-font-plus" class="hover:text-white font-bold px-1" title="Aumentar Fonte">A+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CABEÇALHO INSTITUCIONAL AGENDA SISINFRA ================= -->
+  <header class="ufpb-header py-4 px-4 sm:px-8 border-b border-slate-200 bg-white shadow-sm no-print">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      
+      <!-- Marca Institucional -->
+      <div class="flex items-center gap-4">
+        <a href="https://www.ufpb.br" target="_blank" rel="noopener" class="flex-shrink-0" title="Universidade Federal da Paraíba">
+          <img src="assets/ufpb-brasao.png" alt="Brasão Oficial da UFPB" class="w-14 h-20 object-contain drop-shadow-sm">
+        </a>
+        <div class="border-l-2 border-slate-200 pl-4">
+          <div class="flex items-center gap-2">
+            <span class="text-lg sm:text-xl font-extrabold text-ufpb-blue tracking-tight">Agenda SisInfra</span>
+            <a href="https://sisinfra.ufpb.br" target="_blank" rel="noopener" class="badge-sisinfra text-[10px] hover:underline" title="Catálogo Oficial SisInfra">
+              🔗 sisinfra.ufpb.br
+            </a>
+          </div>
+          <div class="ufpb-brand-subtitle font-bold text-slate-700 text-xs sm:text-sm">
+            Gestão de Espaços e Infraestrutura • PRG / UFPB
+          </div>
+          <div class="ufpb-brand-unit flex items-center gap-2 mt-0.5">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="font-semibold text-slate-700">Central de Aulas & PRG Sede</span>
+            <span class="text-slate-400">•</span>
+            <span class="text-slate-500">Auditórios, Salas de Reunião & Checklist de Salas de Aula</span>
+          </div>
+        </div>
+        <div class="hidden lg:flex items-center border-l-2 border-slate-200 pl-4 ml-2">
+          <a href="https://www.prg.ufpb.br" target="_blank" rel="noopener" title="Pró-Reitoria de Graduação">
+            <img src="assets/prg-logo.png" alt="Logo PRG" class="h-12 w-auto object-contain">
+          </a>
+        </div>
+      </div>
+
+      <!-- Área de Autenticação / Operador -->
+      <div class="flex items-center gap-3">
+        <!-- Não Logado -->
+        <div id="user-unlogged-container" class="flex items-center gap-2">
+          <button id="btn-open-login" class="bg-ufpb-blue hover:bg-ufpb-navy text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            <span>Acesso da Equipe (Login)</span>
+          </button>
+        </div>
+
+        <!-- Logado -->
+        <div id="user-logged-container" class="hidden flex items-center gap-3 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+          <div class="text-right">
+            <div id="user-name-display" class="font-bold text-xs text-slate-800">Operador</div>
+            <span id="user-badge-display" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800">
+              Operador
+            </span>
+          </div>
+          <button id="btn-logout" class="text-xs text-red-600 hover:text-red-800 font-semibold p-1 hover:bg-red-50 rounded" title="Sair do Sistema">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= BANNER INFORMATIVO SISINFRA ================= -->
+  <div id="demo-banner" class="bg-blue-50 border-b border-blue-200 py-2.5 px-4 sm:px-8 text-xs text-blue-900 no-print">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="font-bold">Agenda SisInfra Ativa:</span>
+        <span class="text-blue-950">
+          Catálogo integrado de <strong>102 instalações da PRG</strong>. Auditórios e salas de reunião reserváveis, com controle de <strong>checklist de equipamentos</strong> por sala.
+        </span>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="https://sisinfra.ufpb.br" target="_blank" rel="noopener" class="text-xs font-bold text-blue-800 hover:text-blue-950 underline flex items-center gap-1">
+          🌐 Acessar SisInfra UFPB
+        </a>
+        <span class="text-blue-300">|</span>
+        <button onclick="appManager.openModal('modal-firebase-help')" class="text-xs font-bold text-blue-800 hover:text-blue-950 underline flex items-center gap-1">
+          ⚙️ Firebase / Deploy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MENU DE NAVEGAÇÃO POR ABAS ================= -->
+  <div class="nav-tabs-container bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 flex overflow-x-auto">
+      <button class="nav-tab-btn active" data-tab="calendario">
+        <span>📅</span> <span>Calendário de Reservas</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="lista">
+        <span>📋</span> <span>Lista de Agendamentos</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="pauta">
+        <span>📑</span> <span>Pauta Diária</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="novo">
+        <span>➕</span> <span>Nova Reserva</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="auditorios">
+        <span>🏢</span> <span>Infraestrutura SisInfra & Checklist</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="bloqueios">
+        <span>🔒</span> <span>Bloqueios & Período Letivo</span>
+      </button>
+      <button id="tab-btn-usuarios" class="nav-tab-btn hidden" data-tab="usuarios">
+        <span>👥</span> <span>Pessoas Autorizadas</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= CONTEÚDO PRINCIPAL ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8">
+
+    <!-- ================= ABA 1: CALENDÁRIO ================= -->
+    <section id="tab-calendario" class="tab-content-section space-y-6">
+      
+      <!-- Cabeçalho do Calendário com Filtros e Legendas -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        <!-- Navegação de Mês & Semestre Vigente -->
+        <div class="flex flex-col sm:flex-row items-center gap-3">
+          <div class="flex items-center gap-2">
+            <button id="cal-prev-btn" class="p-2 rounded-lg border border-slate-300 hover:bg-slate-100 transition-colors text-slate-700" title="Mês Anterior">
+              ◀
+            </button>
+            <div class="flex flex-col items-center">
+              <h2 id="calendar-month-title" class="text-lg sm:text-xl font-bold text-ufpb-blue min-w-[190px] text-center">
+                Novembro de 2026
+              </h2>
+              <div id="calendar-semester-badge" class="mt-0.5"></div>
+            </div>
+            <button id="cal-next-btn" class="p-2 rounded-lg border border-slate-300 hover:bg-slate-100 transition-colors text-slate-700" title="Próximo Mês">
+              ▶
+            </button>
+          </div>
+          <button id="cal-today-btn" class="text-xs font-bold text-ufpb-blue px-3 py-1.5 border border-ufpb-blue/30 rounded-lg hover:bg-ufpb-light transition-colors">
+            Hoje
+          </button>
+        </div>
+
+        <!-- Filtro por Espaço & Legenda Dinâmica -->
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <span>Espaço:</span>
+            <select id="cal-auditorio-filter" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+              <option value="todos">Todos os Espaços Reserváveis</option>
+            </select>
+          </div>
+
+          <!-- Legenda Dinâmica -->
+          <div id="calendar-legend-container" class="flex flex-wrap items-center gap-3 text-xs">
+            <!-- Gerado dinamicamente -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Grid do Calendário -->
+      <div id="calendar-grid-container" class="shadow-sm rounded-xl overflow-hidden bg-white">
+        <!-- Renderizado dinamicamente pelo calendar.js -->
+      </div>
+
+      <!-- Dica Rápida -->
+      <div class="text-center text-xs text-slate-500 py-2">
+        💡 <strong>Dica:</strong> Clique em qualquer dia para iniciar uma nova reserva nessa data, ou clique em um evento existente para ver os detalhes completos.
+      </div>
+    </section>
+
+    <!-- ================= ABA 2: LISTA DE AGENDAMENTOS ================= -->
+    <section id="tab-lista" class="tab-content-section hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-ufpb-blue">Lista de Agendamentos e Reservas</h2>
+          <p class="text-xs text-slate-500">Visualize, busque, filtre e gerencie todos os eventos cadastrados na Agenda SisInfra.</p>
+        </div>
+        <button onclick="appManager.switchTab('novo')" class="bg-ufpb-blue hover:bg-ufpb-navy text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2 self-start sm:self-auto">
+          <span>➕</span> <span>Nova Reserva</span>
+        </button>
+      </div>
+
+      <!-- Barra de Filtros da Tabela -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Buscar Reserva</label>
+          <input type="text" id="table-search" placeholder="Título, solicitante ou setor..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Espaço / Sala</label>
+          <select id="table-filter-auditorio" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            <option value="todos">Todos os Espaços Reserváveis</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Status da Reserva</label>
+          <select id="table-filter-status" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            <option value="todos">Todos os Status</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="pendente">Pendente de Aprovação</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200">
+            <tr>
+              <th class="py-3 px-4">Data</th>
+              <th class="py-3 px-4">Horário</th>
+              <th class="py-3 px-4">Espaço Reservado</th>
+              <th class="py-3 px-4">Evento / Atividade</th>
+              <th class="py-3 px-4">Solicitante</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="table-agendamentos-body">
+            <!-- Renderizado dinamicamente -->
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ================= ABA 3: PAUTA DO DIA ================= -->
+    <section id="tab-pauta" class="tab-content-section hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-ufpb-blue">Pauta Diária dos Espaços</h2>
+          <p class="text-xs text-slate-500">Programação de uso dos espaços para controle da portaria, suporte e apoio acadêmico.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="text-xs font-bold text-slate-700">Data:</label>
+          <input type="date" id="pauta-date-picker" class="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+          <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg border border-slate-300 flex items-center gap-1.5">
+            🖨️ <span>Imprimir Pauta</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Container da Pauta (colunas por espaço) -->
+      <div id="pauta-container">
+        <!-- Renderizado dinamicamente -->
+      </div>
+
+    </section>
+
+    <!-- ================= ABA 4: NOVO AGENDAMENTO ================= -->
+    <section id="tab-novo" class="tab-content-section hidden max-w-3xl mx-auto space-y-6">
+      
+      <div class="bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm">
+        <div class="border-b border-slate-200 pb-4 mb-6">
+          <h2 id="ag-form-title" class="text-xl font-bold text-ufpb-blue">Novo Agendamento - Agenda SisInfra</h2>
+          <p class="text-xs text-slate-500 mt-1">Selecione o espaço reservável e preencha os detalhes. O sistema valida automaticamente conflitos de horário.</p>
+        </div>
+
+        <!-- Aviso de Usuário não logado -->
+        <div id="auth-alert-booking" class="bg-blue-50 border border-blue-200 text-blue-900 p-3.5 rounded-lg text-xs mb-6 flex items-start gap-2.5">
+          <span class="text-base">ℹ️</span>
+          <div>
+            <strong>Solicitação Aberta:</strong> Como você não está logado como membro da equipe, a reserva ficará com status <strong>Pendente de Aprovação</strong> até a validação pela Central de Aulas / PRG. Membros da equipe podem <a href="#" onclick="appManager.openModal('modal-login')" class="underline font-bold text-ufpb-blue">fazer login aqui</a> para aprovação imediata.
+          </div>
+        </div>
+
+        <form id="form-agendamento" class="space-y-5">
+          
+          <!-- Escolha do Espaço Reservável -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Espaço Reservável Solicitado *</label>
+            <select id="ag-auditorio" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+              <!-- Populado dinamicamente com os espaços reserváveis do SisInfra -->
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">Somente auditórios e salas habilitadas para reserva no catálogo SisInfra aparecem nesta lista.</p>
+          </div>
+
+          <!-- Título e Tipo -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 mb-1">Título do Evento / Atividade *</label>
+              <input type="text" id="ag-titulo" required placeholder="Ex: Defesa de Tese, Seminário de Ensino, Reunião do Colegiado" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Evento *</label>
+              <select id="ag-tipo" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+                <option value="Palestra / Conferência">Palestra / Conferência</option>
+                <option value="Defesa de TCC / Pós-Graduação">Defesa de TCC / Pós-Graduação</option>
+                <option value="Reunião de Colegiado / Gestão">Reunião de Colegiado / Gestão</option>
+                <option value="Aula Especial / Seminário">Aula Especial / Seminário</option>
+                <option value="Capacitação / Oficina">Capacitação / Oficina</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Data e Horários -->
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Data do Evento *</label>
+              <input type="date" id="ag-data" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Horário de Início *</label>
+              <input type="time" id="ag-inicio" required value="08:00" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Horário de Término *</label>
+              <input type="time" id="ag-fim" required value="12:00" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+          </div>
+
+          <!-- Alerta Dinâmico de Bloqueio de Horário -->
+          <div id="booking-block-warning" class="hidden p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 flex items-start gap-2.5">
+            <span class="text-xl">🔒</span>
+            <div class="flex-1">
+              <strong class="block font-bold text-red-900" id="booking-block-warning-title">Horário Bloqueado para Aulas do Período Letivo!</strong>
+              <p class="mt-0.5 text-[11px] text-red-700 leading-relaxed" id="booking-block-warning-msg">
+                Esta sala possui reserva prioritária para aulas regulares da graduação ou atividades acadêmicas neste turno.
+              </p>
+            </div>
+          </div>
+
+          <!-- Dados do Solicitante -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo do Solicitante *</label>
+              <input type="text" id="ag-solicitante" required placeholder="Ex: Profa. Dra. Silva" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Departamento / Coordenação / Setor *</label>
+              <input type="text" id="ag-departamento" required placeholder="Ex: Coordenação de Graduação / PRG" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Institucional (@academico.ufpb.br) *</label>
+              <input type="email" id="ag-email" required placeholder="nome@academico.ufpb.br" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Telefone / WhatsApp para contato *</label>
+              <input type="tel" id="ag-telefone" required placeholder="(83) 98888-0000" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+          </div>
+
+          <!-- Recursos Necessários (Dinâmico com base no Checklist da Sala) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Recursos Disponíveis na Sala</label>
+              <span class="text-[11px] text-slate-500 italic">Itens ativos no checklist deste espaço</span>
+            </div>
+            <div id="ag-recursos-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <!-- Renderizado dinamicamente com base no checklist do espaço -->
+            </div>
+          </div>
+
+          <!-- Observações -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Observações Adicionais (opcional)</label>
+            <textarea id="ag-obs" rows="2" placeholder="Informações adicionais para a equipe de apoio técnico..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue"></textarea>
+          </div>
+
+          <!-- Botões de Ação -->
+          <div class="flex items-center gap-3 pt-3 border-t border-slate-200">
+            <button type="submit" class="bg-ufpb-blue hover:bg-ufpb-navy text-white text-xs font-bold px-6 py-3 rounded-lg shadow-sm transition-all flex items-center gap-2">
+              <span>💾</span> <span>Confirmar Agendamento</span>
+            </button>
+            <button type="button" id="btn-cancel-edit" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-3 rounded-lg">
+              Cancelar Edição
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </section>
+
+    <!-- ================= ABA 5: GESTÃO DE PESSOAS AUTORIZADAS ================= -->
+    <section id="tab-usuarios" class="tab-content-section hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-ufpb-blue">Pessoas Autorizadas a Gerenciar Agendamentos</h2>
+          <p class="text-xs text-slate-500">Cadastre e gerencie membros da equipe da Central de Aulas e PRG com permissão para mexer nos agendamentos.</p>
+        </div>
+        <button id="btn-novo-usuario" class="bg-ufpb-blue hover:bg-ufpb-navy text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2 self-start sm:self-auto">
+          <span>➕</span> <span>Cadastrar Nova Pessoa</span>
+        </button>
+      </div>
+
+      <!-- Tabela de Usuários -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200">
+            <tr>
+              <th class="py-3 px-4">Nome</th>
+              <th class="py-3 px-4">E-mail Institucional</th>
+              <th class="py-3 px-4">Setor / Departamento</th>
+              <th class="py-3 px-4">Perfil</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="table-usuarios-body">
+            <!-- Renderizado dinamicamente -->
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ================= ABA 6: INFRAESTRUTURA SISINFRA & CHECKLIST ================= -->
+    <section id="tab-auditorios" class="tab-content-section hidden space-y-6">
+      
+      <!-- Cabeçalho do Catálogo -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="badge-sisinfra font-bold">🏛️ SisInfra UFPB</span>
+            <span class="text-xs text-slate-400">•</span>
+            <a href="https://sisinfra.ufpb.br" target="_blank" rel="noopener" class="text-xs font-bold text-blue-700 hover:underline">
+              https://sisinfra.ufpb.br
+            </a>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-ufpb-blue">Catálogo de Infraestrutura & Checklist</h2>
+          <p class="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
+            Cadastro oficial de todas as 102 instalações da <strong>Pró-Reitoria de Graduação (PRG)</strong>. As <strong>salas de aula da Central de Aulas e auditórios estão agendáveis</strong>, com controle de bloqueio automático para os horários de aulas dos períodos letivos.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-open-import-sisinfra" class="px-3.5 py-2 text-xs font-bold text-white bg-ufpb-blue hover:bg-ufpb-navy rounded-lg shadow-2xs flex items-center gap-1.5 transition-colors">
+            <span>📥</span> <span>Importar Dados SisInfra (CSV)</span>
+          </button>
+          <button id="btn-quick-manage-blocks" class="px-3 py-2 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200 transition-colors flex items-center gap-1.5">
+            <span>🔒</span> <span>Gerenciar Bloqueios & Aulas</span>
+          </button>
+          <button id="btn-reset-sisinfra-catalog" class="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200 transition-colors" title="Restaurar dados originais do CSV SisInfra">
+            🔄 Restaurar Padrão
+          </button>
+        </div>
+      </div>
+
+      <!-- Cards de Métricas / KPIs SisInfra -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Total de Espaços</span>
+          <span id="kpi-total-espacos" class="text-2xl font-extrabold text-slate-800">102</span>
+          <span class="text-[11px] text-slate-400 block mt-0.5">Cadastrados no SisInfra PRG</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider block">Espaços Reserváveis</span>
+          <span id="kpi-reservaveis-espacos" class="text-2xl font-extrabold text-emerald-600">70</span>
+          <span class="text-[11px] text-slate-400 block mt-0.5">Salas de Aula & Auditórios Ativos</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-bold text-blue-700 uppercase tracking-wider block">Salas de Aula</span>
+          <span id="kpi-salas-aula" class="text-2xl font-extrabold text-blue-600">59</span>
+          <span class="text-[11px] text-slate-400 block mt-0.5">Central de Aulas (Blocos A a H)</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-bold text-purple-700 uppercase tracking-wider block">Reunião & Gabinetes</span>
+          <span id="kpi-reuniao-espacos" class="text-2xl font-extrabold text-purple-600">17</span>
+          <span class="text-[11px] text-slate-400 block mt-0.5">Administrativos & Coordenações</span>
+        </div>
+      </div>
+
+      <!-- Barra de Filtros do Catálogo -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="w-full md:w-1/3">
+          <input type="text" id="sisinfra-search" placeholder="Buscar por sala, bloco, INFRA... ou e-MEC..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+        </div>
+
+        <div class="w-full md:w-auto flex flex-wrap items-center gap-3">
+          <div>
+            <select id="sisinfra-filter-bloco" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+              <option value="todos">Todos os Blocos / Setores</option>
+            </select>
+          </div>
+
+          <div>
+            <select id="sisinfra-filter-tipo" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+              <option value="todos">Todos os Tipos de Instalação</option>
+              <option value="Auditório / Centro de Convenções / Anfiteatro">Auditório / Anfiteatro</option>
+              <option value="Espaço Para Atividade Administrativa">Espaço Administrativo / Reunião</option>
+              <option value="Sala de Aula">Sala de Aula</option>
+              <option value="Espaço Para Coordenação">Espaço Para Coordenação</option>
+              <option value="Laboratório de Informática">Laboratório de Informática</option>
+              <option value="Outras Instalações">Outras Instalações</option>
+            </select>
+          </div>
+
+          <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100">
+            <input type="checkbox" id="sisinfra-filter-reservavel" class="rounded text-ufpb-blue focus:ring-ufpb-blue">
+            <span>Apenas Reserváveis</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Contador de Exibição -->
+      <div id="sisinfra-count-display" class="text-xs font-semibold text-slate-500 px-1">
+        Carregando espaços do SisInfra...
+      </div>
+
+      <!-- Grid dos Cards do Catálogo SisInfra -->
+      <div id="sisinfra-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Renderizado dinamicamente pelo app.js -->
+      </div>
+
+    </section>
+
+    <!-- ================= ABA: BLOQUEIOS DE HORÁRIOS & PERÍODOS LETIVOS ================= -->
+    <section id="tab-bloqueios" class="tab-content-section hidden space-y-6">
+      
+      <!-- Cabeçalho de Bloqueios -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="badge-sisinfra font-bold bg-amber-100 text-amber-900 border-amber-300">🔒 Gestão de Bloqueios</span>
+            <span class="text-xs text-slate-400">•</span>
+            <span class="text-xs font-semibold text-slate-600">Central de Aulas & Auditórios PRG</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-ufpb-blue">Bloqueio de Horários & Período Letivo</h2>
+          <p class="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
+            Reserve horários para <strong>aulas regulares da graduação (SIGAA)</strong>, manutenções técnicas, concursos ou eventos institucionais. Quando um bloqueio está ativo, o sistema <strong>impede automaticamente novos agendamentos</strong> conflitantes nas salas e turnos protegidos.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-novo-bloqueio" class="px-3.5 py-2 text-xs font-bold text-white bg-ufpb-blue hover:bg-ufpb-navy rounded-lg shadow-2xs flex items-center gap-1.5 transition-colors">
+            <span>➕</span> <span>Novo Bloqueio</span>
+          </button>
+          <button id="btn-toggle-semestre-letivo" class="px-3.5 py-2 text-xs font-semibold text-blue-900 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors flex items-center gap-1.5" title="Alternar status do período letivo regular">
+            <span>⚡</span> <span>Alternar Aulas Regulares</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Métricas / KPIs dos Bloqueios -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Total de Bloqueios</span>
+          <span id="kpi-total-bloqueios" class="text-2xl font-extrabold text-slate-800">12</span>
+          <span class="text-[11px] text-slate-400 block mt-0.5">2026.2, 2027.1 e 2027.2</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider block">Bloqueios Ativos</span>
+          <span id="kpi-bloqueios-ativos" class="text-2xl font-extrabold text-emerald-600">4</span>
+          <span class="text-[11px] text-slate-400 block mt-0.5">Em vigor impedindo conflito</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-bold text-blue-700 uppercase tracking-wider block">Salas Protegidas</span>
+          <span id="kpi-salas-bloqueadas" class="text-2xl font-extrabold text-blue-600">59</span>
+          <span class="text-[11px] text-slate-400 block mt-0.5">Central de Aulas (Blocos A a H)</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-bold text-purple-700 uppercase tracking-wider block">Período Vigente UFPB</span>
+          <span id="kpi-periodo-vigente" class="text-lg font-extrabold text-purple-700 mt-1 block">2026.2 (Ativo)</span>
+          <span class="text-[11px] text-slate-400 block mt-0.5">Aulas até 16/12/2026 • 2027.1 e 2027.2 publicados</span>
+        </div>
+      </div>
+
+      <!-- Quadro Informativo Oficial do Calendário Acadêmico UFPB (PRG / Consepe) -->
+      <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-xl p-5 text-white shadow-md">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-white/10 gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">📅</span>
+            <div>
+              <h3 class="font-bold text-sm sm:text-base tracking-wide">Calendários Acadêmicos Oficiais da Graduação UFPB (PRG / Consepe)</h3>
+              <p class="text-[11px] text-blue-200">Resoluções oficiais dos períodos letivos presenciais em vigor e publicados</p>
+            </div>
+          </div>
+          <span class="text-[11px] bg-white/10 text-blue-200 px-2.5 py-1 rounded-full font-mono font-semibold self-start sm:self-auto">
+            Novembro/2026
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <!-- Card 2026.2 -->
+          <div class="bg-white/10 hover:bg-white/15 p-3.5 rounded-lg border border-emerald-400/40 transition-colors">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-extrabold text-sm text-emerald-300">2026.2</span>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 px-2 py-0.5 rounded font-bold">● VIGENTE / EM CURSO</span>
+            </div>
+            <div class="space-y-1 text-slate-200 text-[11px]">
+              <div><strong>Aulas:</strong> 28/08/2026 a 16/12/2026</div>
+              <div><strong>Exames Finais:</strong> 17 a 22/12/2026</div>
+              <div><strong>Colações de Grau:</strong> 11 a 29/01/2027</div>
+              <div><strong>Férias/Recesso:</strong> 23/12/2026 a 28/02/2027</div>
+            </div>
+          </div>
+
+          <!-- Card 2027.1 -->
+          <div class="bg-white/10 hover:bg-white/15 p-3.5 rounded-lg border border-blue-400/30 transition-colors">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-extrabold text-sm text-blue-300">2027.1</span>
+              <span class="text-[10px] bg-blue-500/20 text-blue-200 border border-blue-400/50 px-2 py-0.5 rounded font-bold">PRÓXIMO SEMESTRE</span>
+            </div>
+            <div class="space-y-1 text-slate-200 text-[11px]">
+              <div><strong>Matrículas SIGAA:</strong> 11 a 13/02/2027</div>
+              <div><strong>Aulas:</strong> 01/03/2027 a 10/07/2027</div>
+              <div><strong>Exames Finais:</strong> 12 a 17/07/2027</div>
+              <div><strong>Colações de Grau:</strong> 02 a 31/08/2027</div>
+            </div>
+          </div>
+
+          <!-- Card 2027.2 -->
+          <div class="bg-white/10 hover:bg-white/15 p-3.5 rounded-lg border border-purple-400/30 transition-colors">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-extrabold text-sm text-purple-300">2027.2</span>
+              <span class="text-[10px] bg-purple-500/20 text-purple-200 border border-purple-400/50 px-2 py-0.5 rounded font-bold">PUBLICADO NO CONSEPE</span>
+            </div>
+            <div class="space-y-1 text-slate-200 text-[11px]">
+              <div><strong>Matrículas SIGAA:</strong> 21 a 23/07/2027</div>
+              <div><strong>Aulas:</strong> 09/08/2027 a 16/12/2027</div>
+              <div><strong>Exames Finais:</strong> 17 a 22/12/2027</div>
+              <div><strong>Colações de Grau:</strong> 01 a 25/02/2028</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros da Tabela de Bloqueios -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="w-full md:w-1/3">
+          <input type="text" id="bloqueios-search" placeholder="Buscar por título, motivo, turno, semestre..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+        </div>
+
+        <div class="w-full md:w-auto flex flex-wrap items-center gap-3">
+          <select id="bloqueios-filter-semestre" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            <option value="todos">Todos os Semestres</option>
+            <option value="2026.2">Semestre 2026.2 (Vigente)</option>
+            <option value="2027.1">Semestre 2027.1 (Próximo)</option>
+            <option value="2027.2">Semestre 2027.2 (Publicado)</option>
+          </select>
+
+          <select id="bloqueios-filter-motivo" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            <option value="todos">Todos os Motivos</option>
+            <option value="aulas_periodo_letivo">Aulas do Período Letivo</option>
+            <option value="manutencao">Manutenção Predial</option>
+            <option value="evento">Evento Institucional</option>
+            <option value="concurso">Concurso / Vestibular</option>
+            <option value="outro">Outro Motivo</option>
+          </select>
+
+          <select id="bloqueios-filter-status" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            <option value="todos">Todos os Status</option>
+            <option value="ativo">Apenas Ativos</option>
+            <option value="inativo">Apenas Inativos</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Lista / Grid de Bloqueios -->
+      <div id="bloqueios-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Renderizado dinamicamente pelo app.js -->
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= MODAIS ================= -->
+
+  <!-- 1. MODAL LOGIN -->
+  <div id="modal-login" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-md">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
+        <div class="flex items-center gap-3">
+          <img src="assets/ufpb-brasao.png" alt="Brasão da UFPB" class="h-10 w-auto">
+          <img src="assets/prg-logo.png" alt="Logo PRG" class="h-8 w-auto">
+          <div class="border-l border-slate-200 pl-2">
+            <h3 class="font-bold text-sm text-ufpb-blue">Acesso da Equipe</h3>
+            <p class="text-[11px] text-slate-500">Agenda SisInfra • PRG / UFPB</p>
+          </div>
+        </div>
+        <button id="btn-close-login" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <form id="form-login" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Institucional (@academico.ufpb.br)</label>
+          <input type="text" id="login-email" required placeholder="usuario@academico.ufpb.br" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+          <p class="text-[10px] text-slate-400 mt-1">Apenas contas institucionais @academico.ufpb.br têm permissão de acesso.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Senha de Acesso</label>
+          <input type="password" id="login-senha" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+        </div>
+
+        <button type="submit" class="w-full bg-ufpb-blue hover:bg-ufpb-navy text-white text-xs font-bold py-2.5 rounded-lg shadow-sm transition-all">
+          Entrar no Sistema
+        </button>
+      </form>
+
+      <!-- Botões de Demonstração Rápida -->
+      <div class="mt-6 pt-4 border-t border-slate-200">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2 text-center">Atalhos de Acesso Rápido</span>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="btn-demo-admin" type="button" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-semibold p-2 rounded-lg text-center transition-colors">
+            👑 Gestor SisInfra
+            <span class="block text-[10px] text-amber-700 font-normal mt-0.5">Acesso total</span>
+          </button>
+          <button id="btn-demo-op" type="button" class="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 text-xs font-semibold p-2 rounded-lg text-center transition-colors">
+            👤 Operador
+            <span class="block text-[10px] text-blue-700 font-normal mt-0.5">Reservas e Pauta</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. MODAL DETALHES DO AGENDAMENTO -->
+  <div id="modal-booking-details" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-xl">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+        <h3 class="font-bold text-base text-ufpb-blue">Detalhes da Reserva • Agenda SisInfra</h3>
+        <button onclick="appManager.closeModal('modal-booking-details')" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <div id="booking-details-content">
+        <!-- Renderizado dinamicamente -->
+      </div>
+
+      <div id="booking-details-actions" class="mt-6 pt-4 border-t border-slate-200 flex flex-wrap items-center gap-2">
+        <!-- Renderizado dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. MODAL CADASTRAR PESSOA AUTORIZADA -->
+  <div id="modal-usuario" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-lg">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
+        <h3 id="modal-user-title" class="font-bold text-base text-ufpb-blue">Cadastrar Pessoa Autorizada</h3>
+        <button id="btn-close-modal-user" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <form id="form-usuario" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+          <input type="text" id="usr-nome" required placeholder="Ex: Maria Clara Souza" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Institucional (@academico.ufpb.br) *</label>
+          <input type="email" id="usr-email" required placeholder="maria.souza@academico.ufpb.br" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+          <p class="text-[10px] text-slate-400 mt-1">Obrigatório pertencer ao domínio @academico.ufpb.br</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Setor / Departamento *</label>
+          <input type="text" id="usr-setor" required placeholder="Ex: Central de Aulas - Campus I / PRG" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Nível de Acesso *</label>
+            <select id="usr-perfil" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+              <option value="operador">Operador (Criar / Editar reservas)</option>
+              <option value="admin">Administrador Geral (Acesso Total & Checklist)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Senha Inicial *</label>
+            <input type="password" id="usr-senha" required placeholder="Mínimo 6 caracteres" minlength="6" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onclick="appManager.closeModal('modal-usuario')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-ufpb-blue hover:bg-ufpb-navy rounded-lg shadow-sm">
+            Salvar Pessoa Autorizada
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. MODAL AJUDA / PUBLICAR NO FIREBASE -->
+  <div id="modal-firebase-help" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-2xl">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+        <h3 class="font-bold text-base text-ufpb-blue">Como Publicar no Firebase Hosting</h3>
+        <button onclick="appManager.closeModal('modal-firebase-help')" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs text-slate-700 leading-relaxed">
+        <p>A <strong>Agenda SisInfra</strong> está pronta para ser publicada gratuitamente no <strong>Firebase Hosting & Cloud Firestore</strong>.</p>
+
+        <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-800">Passo 1: Criar o Projeto no Firebase</div>
+          <p>Acesse <a href="https://console.firebase.google.com" target="_blank" class="text-blue-600 underline font-semibold">console.firebase.google.com</a>, clique em <strong>Adicionar projeto</strong> e dê um nome (ex: <code>agenda-sisinfra-ufpb</code>).</p>
+        </div>
+
+        <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-800">Passo 2: Ativar Authentication e Cloud Firestore</div>
+          <p>Ative o Provedor de <strong>E-mail/senha</strong> no Authentication e inicie o <strong>Cloud Firestore</strong> na região de São Paulo (<code>southamerica-east1</code>).</p>
+        </div>
+
+        <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-800">Passo 3: Inserir as credenciais em js/firebase-config.js</div>
+          <p>Copie o objeto <code>firebaseConfig</code> gerado no console e cole no arquivo <code class="font-bold text-blue-800">js/firebase-config.js</code>.</p>
+        </div>
+
+        <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-800">Passo 4: Publicar via Terminal</div>
+          <p>No terminal desta pasta, execute:</p>
+          <pre class="bg-slate-900 text-slate-100 p-2.5 rounded font-mono text-[11px] overflow-x-auto">firebase login
+firebase use --add seu-projeto-id
+firebase deploy</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. MODAL CHECKLIST DA SALA / ESPAÇO (AGENDA SISINFRA) -->
+  <div id="modal-checklist" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="badge-sisinfra text-[10px]" id="chk-modal-code">INFRA2220PRG</span>
+            <span class="text-xs text-slate-500 font-semibold" id="chk-modal-emec">e-MEC: 950379</span>
+          </div>
+          <h3 id="chk-modal-title" class="font-bold text-lg text-ufpb-blue mt-0.5">Checklist de Equipamentos</h3>
+          <p id="chk-modal-subtitle" class="text-xs text-slate-500">PRG - CENTRAL DE AULAS</p>
+        </div>
+        <button onclick="appManager.closeModal('modal-checklist')" class="text-slate-400 hover:text-slate-600 font-bold text-xl p-1">✕</button>
+      </div>
+
+      <!-- Informações & Toggle de Espaço Reservável -->
+      <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <div class="font-bold text-xs text-blue-950 flex items-center gap-2">
+            <span>📅 Disponibilidade para Reserva na Agenda SisInfra</span>
+          </div>
+          <p class="text-[11px] text-blue-800 mt-0.5">
+            Quando ativo, este espaço aparece no Calendário e no formulário de reservas para os usuários.
+          </p>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <label class="switch-toggle">
+            <input type="checkbox" id="chk-is-reservavel">
+            <span class="switch-slider"></span>
+          </label>
+          <span id="chk-reservavel-label" class="text-xs font-bold text-blue-900">Reservável</span>
+        </div>
+      </div>
+
+      <!-- Lista de Itens do Checklist com Scroll -->
+      <div class="flex-1 overflow-y-auto pr-1 space-y-3">
+        <div class="flex items-center justify-between pb-1">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Equipamentos & Recursos Didáticos</h4>
+          <span class="text-[11px] text-slate-400">Ative ou desative o status de cada item</span>
+        </div>
+
+        <div id="chk-items-list" class="space-y-2">
+          <!-- Renderizado dinamicamente via JS -->
+        </div>
+      </div>
+
+      <!-- Rodapé do Modal com Ações -->
+      <div class="pt-4 mt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <span class="text-[11px] text-slate-500 italic">As atualizações no checklist impactam imediatamente as opções de reserva.</span>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="appManager.closeModal('modal-checklist')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+            Cancelar
+          </button>
+          <button type="button" id="btn-save-checklist" class="px-5 py-2 text-xs font-bold text-white bg-ufpb-blue hover:bg-ufpb-navy rounded-lg shadow-sm flex items-center gap-1.5 transition-colors">
+            <span>💾</span> <span>Salvar Checklist</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. MODAL IMPORTAÇÃO SISINFRA (CSV) -->
+  <div id="modal-import-sisinfra" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">📥</span>
+          <div>
+            <h3 class="font-bold text-base sm:text-lg text-ufpb-blue">Importar Dados do SisInfra</h3>
+            <p class="text-[11px] text-slate-500">Atualize o cadastro a partir do arquivo CSV exportado do SisInfra UFPB</p>
+          </div>
+        </div>
+        <button onclick="appManager.closeModal('modal-import-sisinfra')" class="text-slate-400 hover:text-slate-600 font-bold text-xl p-1">✕</button>
+      </div>
+
+      <div class="space-y-4 flex-1 overflow-y-auto pr-1 text-xs">
+        <!-- Instruções -->
+        <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-3.5 text-blue-900 space-y-1">
+          <div class="font-bold flex items-center gap-1.5">
+            <span>ℹ️</span> <span>Instruções de Exportação</span>
+          </div>
+          <p class="text-[11px] text-blue-800 leading-relaxed">
+            Acesse <a href="https://sisinfra.ufpb.br" target="_blank" rel="noopener" class="underline font-bold">sisinfra.ufpb.br</a>, filtre as infraestruturas da PRG e clique em <strong>Exportar CSV</strong>. Selecione o arquivo baixado ou cole o conteúdo abaixo.
+          </p>
+        </div>
+
+        <!-- Zona de Upload de Arquivo -->
+        <div class="border-2 border-dashed border-slate-300 hover:border-ufpb-blue rounded-xl p-5 text-center bg-slate-50 hover:bg-blue-50/40 transition-colors cursor-pointer" onclick="document.getElementById('sisinfra-csv-file-input').click()">
+          <input type="file" id="sisinfra-csv-file-input" accept=".csv,text/csv,text/plain" class="hidden">
+          <span class="text-3xl block mb-1">📁</span>
+          <span class="font-bold text-slate-800 block text-xs sm:text-sm">Clique para selecionar o arquivo CSV</span>
+          <span class="text-[11px] text-slate-500 block mt-1" id="import-file-name-display">exportacao-infraestruturas-*.csv (delimitador ;)</span>
+        </div>
+
+        <!-- Ou Colar Texto Diretamente -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Ou cole o conteúdo do CSV diretamente:</label>
+          <textarea id="import-csv-textarea" rows="4" placeholder="Cole aqui as linhas do CSV exportado..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-mono text-[11px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue"></textarea>
+        </div>
+
+        <!-- Opções de Mesclagem -->
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="import-opt-reservavel" checked class="rounded text-ufpb-blue focus:ring-ufpb-blue">
+            <span class="text-xs font-semibold text-slate-800">Definir Salas da Central de Aulas e Auditórios como agendáveis</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="import-opt-checklist" checked class="rounded text-ufpb-blue focus:ring-ufpb-blue">
+            <span class="text-xs font-semibold text-slate-800">Preservar personalizações de checklists de equipamentos existentes</span>
+          </label>
+        </div>
+
+        <div id="import-status-feedback" class="hidden p-3 rounded-lg text-xs"></div>
+      </div>
+
+      <!-- Rodapé do Modal -->
+      <div class="pt-4 mt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+        <button type="button" onclick="appManager.closeModal('modal-import-sisinfra')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+          Cancelar
+        </button>
+        <button type="button" id="btn-process-import-csv" class="px-5 py-2 text-xs font-bold text-white bg-ufpb-blue hover:bg-ufpb-navy rounded-lg shadow-sm flex items-center gap-1.5 transition-colors">
+          <span>📥</span> <span>Processar Importação</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. MODAL BLOQUEIO DE HORÁRIOS & PERÍODO LETIVO -->
+  <div id="modal-bloqueio" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🔒</span>
+          <div>
+            <h3 id="modal-bloqueio-title" class="font-bold text-base sm:text-lg text-ufpb-blue">Novo Bloqueio de Horário</h3>
+            <p class="text-[11px] text-slate-500">Impeça reservas durante aulas regulares da graduação ou atividades prioritárias</p>
+          </div>
+        </div>
+        <button onclick="appManager.closeModal('modal-bloqueio')" class="text-slate-400 hover:text-slate-600 font-bold text-xl p-1">✕</button>
+      </div>
+
+      <form id="form-bloqueio" class="space-y-4 flex-1 overflow-y-auto pr-1 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Título da Regra de Bloqueio *</label>
+          <input type="text" id="bloq-titulo" required placeholder="Ex: Aulas Regulares da Graduação 2026.1 - Manhã" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Motivo do Bloqueio *</label>
+            <select id="bloq-motivo" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+              <option value="aulas_periodo_letivo">Aulas Regulares do Período Letivo (SIGAA)</option>
+              <option value="manutencao">Manutenção Predial / Climatização / Infraestrutura</option>
+              <option value="evento">Evento Institucional / Solenidade</option>
+              <option value="concurso">Concurso Público / Vestibular / Seleção</option>
+              <option value="outro">Outro Motivo</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Escopo dos Espaços Afetados *</label>
+            <select id="bloq-tipo-espaco" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+              <option value="todas_salas">Todas as Salas de Aula da Central (Blocos A a H)</option>
+              <option value="bloco">Por Bloco Específico</option>
+              <option value="auditorios">Apenas os Auditórios (Auditório 1 e 2)</option>
+              <option value="todos_espacos">Todos os Espaços da PRG</option>
+              <option value="especifico">Sala Específica</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="bloq-bloco-select-wrapper" class="hidden">
+          <label class="block font-bold text-slate-700 mb-1">Selecione o Bloco:</label>
+          <select id="bloq-bloco" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            <option value="Central de Aulas - Bloco A">Central de Aulas - Bloco A</option>
+            <option value="Central de Aulas - Bloco B">Central de Aulas - Bloco B</option>
+            <option value="Central de Aulas - Bloco C">Central de Aulas - Bloco C</option>
+            <option value="Central de Aulas - Bloco D">Central de Aulas - Bloco D</option>
+            <option value="Central de Aulas - Bloco E">Central de Aulas - Bloco E</option>
+            <option value="Central de Aulas - Bloco F">Central de Aulas - Bloco F</option>
+            <option value="Central de Aulas - Bloco G">Central de Aulas - Bloco G</option>
+            <option value="Central de Aulas - Bloco H">Central de Aulas - Bloco H</option>
+          </select>
+        </div>
+
+        <div id="bloq-sala-select-wrapper" class="hidden">
+          <label class="block font-bold text-slate-700 mb-1">Selecione a Sala Específica:</label>
+          <select id="bloq-sala-especifica" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            <!-- Popula dinamicamente -->
+          </select>
+        </div>
+
+        <!-- Preenchimento Rápido por Período Letivo Oficial UFPB -->
+        <div class="bg-blue-50/70 p-3 rounded-xl border border-blue-200">
+          <span class="text-[10px] font-bold text-blue-900 block mb-1.5 uppercase tracking-wider">Preenchimento Rápido por Calendário Oficial UFPB (Consepe):</span>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="appManager.fillBloqSemestre('2026.2')" class="px-2.5 py-1 bg-white hover:bg-blue-100 border border-blue-300 text-blue-900 text-xs font-bold rounded-lg shadow-2xs transition-colors flex items-center gap-1">
+              <span>● 2026.2 (Vigente):</span> <span class="font-normal text-[11px]">28/08 a 16/12/2026</span>
+            </button>
+            <button type="button" onclick="appManager.fillBloqSemestre('2027.1')" class="px-2.5 py-1 bg-white hover:bg-blue-100 border border-blue-300 text-blue-900 text-xs font-bold rounded-lg shadow-2xs transition-colors flex items-center gap-1">
+              <span>2027.1 (Próximo):</span> <span class="font-normal text-[11px]">01/03 a 10/07/2027</span>
+            </button>
+            <button type="button" onclick="appManager.fillBloqSemestre('2027.2')" class="px-2.5 py-1 bg-white hover:bg-blue-100 border border-blue-300 text-blue-900 text-xs font-bold rounded-lg shadow-2xs transition-colors flex items-center gap-1">
+              <span>2027.2 (Publicado):</span> <span class="font-normal text-[11px]">09/08 a 16/12/2027</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Vigência de Datas -->
+        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Data Início da Vigência *</label>
+            <input type="date" id="bloq-data-inicio" required value="2026-08-28" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Data Término da Vigência *</label>
+            <input type="date" id="bloq-data-fim" required value="2026-12-16" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+          </div>
+        </div>
+
+        <!-- Dias da Semana -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">Dias da Semana Bloqueados:</label>
+          <div class="flex flex-wrap gap-2">
+            <label class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer">
+              <input type="checkbox" name="bloq-dia" value="1" checked class="rounded text-ufpb-blue"> <span>Seg</span>
+            </label>
+            <label class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer">
+              <input type="checkbox" name="bloq-dia" value="2" checked class="rounded text-ufpb-blue"> <span>Ter</span>
+            </label>
+            <label class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer">
+              <input type="checkbox" name="bloq-dia" value="3" checked class="rounded text-ufpb-blue"> <span>Qua</span>
+            </label>
+            <label class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer">
+              <input type="checkbox" name="bloq-dia" value="4" checked class="rounded text-ufpb-blue"> <span>Qui</span>
+            </label>
+            <label class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer">
+              <input type="checkbox" name="bloq-dia" value="5" checked class="rounded text-ufpb-blue"> <span>Sex</span>
+            </label>
+            <label class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer">
+              <input type="checkbox" name="bloq-dia" value="6" class="rounded text-ufpb-blue"> <span>Sáb</span>
+            </label>
+            <label class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer">
+              <input type="checkbox" name="bloq-dia" value="0" class="rounded text-ufpb-blue"> <span>Dom</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Horário e Turnos Rápidos -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block font-bold text-slate-700">Horário do Bloqueio *</label>
+            <div class="flex items-center gap-1">
+              <button type="button" onclick="appManager.fillBloqTurno('07:00', '12:00')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-[10px] font-bold rounded">Manhã</button>
+              <button type="button" onclick="appManager.fillBloqTurno('13:00', '18:00')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-[10px] font-bold rounded">Tarde</button>
+              <button type="button" onclick="appManager.fillBloqTurno('18:30', '22:00')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-[10px] font-bold rounded">Noite</button>
+              <button type="button" onclick="appManager.fillBloqTurno('07:00', '22:00')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-[10px] font-bold rounded">Integral</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <span class="text-[10px] font-semibold text-slate-500 block mb-0.5">Hora Início:</span>
+              <input type="time" id="bloq-hora-inicio" required value="07:00" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+            <div>
+              <span class="text-[10px] font-semibold text-slate-500 block mb-0.5">Hora Término:</span>
+              <input type="time" id="bloq-hora-fim" required value="12:00" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Descrição / Justificativa</label>
+          <textarea id="bloq-descricao" rows="2" placeholder="Ex: Turmas presenciais da graduação vinculadas ao SIGAA." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-ufpb-blue"></textarea>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="switch-toggle">
+            <input type="checkbox" id="bloq-ativo" checked>
+            <span class="switch-slider"></span>
+          </label>
+          <span class="text-xs font-bold text-slate-800">Bloqueio Ativo Imediatamente</span>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button type="button" onclick="appManager.closeModal('modal-bloqueio')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-save-bloqueio" class="px-5 py-2 text-xs font-bold text-white bg-ufpb-blue hover:bg-ufpb-navy rounded-lg shadow-sm flex items-center gap-1.5 transition-colors">
+            <span>💾</span> <span>Salvar Bloqueio</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="no-print"></div>
+
+  <!-- ================= RODAPÉ INSTITUCIONAL ================= -->
+  <footer class="bg-slate-800 text-slate-300 py-8 px-4 sm:px-8 mt-auto border-t-4 border-amber-500 no-print text-xs">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      <div>
+        <div class="flex items-center gap-3 mb-3">
+          <img src="assets/ufpb-brasao.png" alt="Brasão UFPB" class="h-10 w-auto opacity-90">
+          <div>
+            <div class="font-bold text-white text-sm">Universidade Federal da Paraíba</div>
+            <div class="text-[11px] text-slate-400">Pró-Reitoria de Graduação (PRG)</div>
+          </div>
+        </div>
+        <p class="text-slate-400 leading-relaxed text-[11px]">
+          Campus I - Cidade Universitária • Castelo Branco, João Pessoa - PB<br>
+          CEP: 58051-900 • Central Telefônica: (83) 3216-7100
+        </p>
+      </div>
+
+      <div>
+        <div class="font-bold text-white uppercase tracking-wider mb-2">Agenda SisInfra</div>
+        <p class="text-slate-400 leading-relaxed text-[11px]">
+          Sistema institucional de gestão e agendamento de espaços acadêmicos da Central de Aulas e PRG. Integrado ao catálogo de infraestrutura da UFPB (<a href="https://sisinfra.ufpb.br" target="_blank" rel="noopener" class="text-amber-300 hover:underline">sisinfra.ufpb.br</a>).
+        </p>
+      </div>
+
+      <div>
+        <div class="font-bold text-white uppercase tracking-wider mb-2">Sistemas & Portais UFPB</div>
+        <ul class="space-y-1.5 text-slate-400 text-[11px]">
+          <li><a href="https://sisinfra.ufpb.br" target="_blank" rel="noopener" class="text-amber-300 font-bold hover:underline">› SisInfra UFPB (sisinfra.ufpb.br)</a></li>
+          <li><a href="https://www.prg.ufpb.br" target="_blank" rel="noopener" class="hover:underline">› Portal da PRG</a></li>
+          <li><a href="https://www.ufpb.br" target="_blank" rel="noopener" class="hover:underline">› Portal Oficial da UFPB</a></li>
+          <li><a href="https://sigaa.ufpb.br" target="_blank" rel="noopener" class="hover:underline">› Sistema Integrado de Gestão (SIGAA)</a></li>
+          <li><a href="https://sipac.ufpb.br" target="_blank" rel="noopener" class="hover:underline">› Patrimônio e Contratos (SIPAC)</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="max-w-7xl mx-auto mt-6 pt-4 border-t border-slate-700/60 text-center text-slate-500 text-[11px]">
+      © 2026 PRG / UFPB • Pró-Reitoria de Graduação da Universidade Federal da Paraíba. Todos os direitos reservados.
+    </div>
+  </footer>
+
+  <!-- Scripts do Sistema (Ordem Correta) -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/sisinfra-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
