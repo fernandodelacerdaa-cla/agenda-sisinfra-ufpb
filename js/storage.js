@@ -679,7 +679,7 @@ class StorageService {
 
     const conflito = agendamentos.find(ag => {
       if (excludeId && ag.id === excludeId) return false;
-      if (ag.status === "cancelado") return false;
+      if (ag.status === "cancelado" || ag.status === "rejeitado") return false;
       if (this.normalizeSpaceId(ag.auditorioId) === audIdStr && ag.data === data) {
         // (A_inicio < B_fim) && (A_fim > B_inicio)
         return (horaInicio < ag.horaFim && horaFim > ag.horaInicio);
@@ -715,6 +715,7 @@ class StorageService {
       ...data,
       auditorioId: normalizedAudId,
       status: data.status || "confirmado",
+      notificacoes: data.notificacoes || [],
       criadoEm: new Date().toISOString()
     };
 
@@ -734,42 +735,47 @@ class StorageService {
   }
 
   async updateAgendamento(id, data) {
-    const normalizedAudId = this.normalizeSpaceId(data.auditorioId);
-
-    // 1. Checa Bloqueio de Horário
-    const bloqueio = await this.checkBlockConflict(normalizedAudId, data.data, data.horaInicio, data.horaFim);
-    if (bloqueio) {
-      const espaco = await this.getEspacoById(normalizedAudId);
-      const espacoNome = espaco ? (espaco.nomeAmigavel || espaco.nome) : "o espaço solicitado";
-      throw new Error(`HORÁRIO BLOQUEADO!\n${espacoNome} está bloqueado das ${bloqueio.horaInicio} às ${bloqueio.horaFim} por: "${bloqueio.titulo}".`);
+    const list = JSON.parse(localStorage.getItem("prg_agendamentos") || "[]");
+    const existing = list.find(ag => ag.id === id);
+    if (!existing) {
+      throw new Error("Agendamento não encontrado.");
     }
 
-    // 2. Checa conflito
-    const conflito = await this.checkConflict(normalizedAudId, data.data, data.horaInicio, data.horaFim, id);
-    if (conflito) {
-      const espaco = await this.getEspacoById(normalizedAudId);
-      const espacoNome = espaco ? (espaco.nomeAmigavel || espaco.nome) : "o espaço solicitado";
-      throw new Error(`Conflito de Horário! ${espacoNome} já está ocupado das ${conflito.horaInicio} às ${conflito.horaFim} pelo evento: "${conflito.titulo}".`);
-    }
+    const merged = { ...existing, ...data };
+    const normalizedAudId = this.normalizeSpaceId(merged.auditorioId);
+    merged.auditorioId = normalizedAudId;
+    merged.atualizadoEm = new Date().toISOString();
 
-    const updatedData = {
-      ...data,
-      auditorioId: normalizedAudId,
-      atualizadoEm: new Date().toISOString()
-    };
+    // Só checa conflito se a reserva estiver ativa/confirmada/pendente (não cancelada ou rejeitada)
+    if (merged.status !== "cancelado" && merged.status !== "rejeitado") {
+      // 1. Checa Bloqueio de Horário
+      const bloqueio = await this.checkBlockConflict(normalizedAudId, merged.data, merged.horaInicio, merged.horaFim);
+      if (bloqueio) {
+        const espaco = await this.getEspacoById(normalizedAudId);
+        const espacoNome = espaco ? (espaco.nomeAmigavel || espaco.nome) : "o espaço solicitado";
+        throw new Error(`HORÁRIO BLOQUEADO!\n${espacoNome} está bloqueado das ${bloqueio.horaInicio} às ${bloqueio.horaFim} por: "${bloqueio.titulo}".`);
+      }
+
+      // 2. Checa conflito
+      const conflito = await this.checkConflict(normalizedAudId, merged.data, merged.horaInicio, merged.horaFim, id);
+      if (conflito) {
+        const espaco = await this.getEspacoById(normalizedAudId);
+        const espacoNome = espaco ? (espaco.nomeAmigavel || espaco.nome) : "o espaço solicitado";
+        throw new Error(`Conflito de Horário! ${espacoNome} já está ocupado das ${conflito.horaInicio} às ${conflito.horaFim} pelo evento: "${conflito.titulo}".`);
+      }
+    }
 
     if (window.isFirebaseActive && window.fbDb) {
       try {
-        await window.fbDb.collection("agendamentos").doc(id).update(updatedData);
+        await window.fbDb.collection("agendamentos").doc(id).update(merged);
       } catch (err) {
         console.error("Erro ao atualizar no Firestore:", err);
       }
     }
 
-    const list = JSON.parse(localStorage.getItem("prg_agendamentos") || "[]");
     const idx = list.findIndex(ag => ag.id === id);
     if (idx >= 0) {
-      list[idx] = { ...list[idx], ...updatedData };
+      list[idx] = merged;
       localStorage.setItem("prg_agendamentos", JSON.stringify(list));
       return list[idx];
     }

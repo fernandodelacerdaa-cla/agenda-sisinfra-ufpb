@@ -165,24 +165,37 @@
   <!-- ================= MENU DE NAVEGAÇÃO POR ABAS ================= -->
   <div class="nav-tabs-container bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs no-print">
     <div class="max-w-7xl mx-auto px-4 sm:px-8 flex overflow-x-auto">
-      <button class="nav-tab-btn active" data-tab="calendario">
-        <span>📅</span> <span>Calendário de Reservas</span>
-      </button>
-      <button class="nav-tab-btn" data-tab="lista">
-        <span>📋</span> <span>Lista de Agendamentos</span>
-      </button>
-      <button class="nav-tab-btn" data-tab="pauta">
-        <span>📑</span> <span>Pauta Diária</span>
-      </button>
-      <button class="nav-tab-btn" data-tab="novo">
+      <!-- 1. Nova Reserva (Público + Autenticado) -->
+      <button id="tab-btn-novo" class="nav-tab-btn active" data-tab="novo">
         <span>➕</span> <span>Nova Reserva</span>
       </button>
-      <button class="nav-tab-btn" data-tab="auditorios">
-        <span>🏢</span> <span>Infraestrutura SisInfra & Checklist</span>
+
+      <!-- 2. Calendário (Público + Autenticado) -->
+      <button id="tab-btn-calendario" class="nav-tab-btn" data-tab="calendario">
+        <span>📅</span> <span>Calendário</span>
       </button>
-      <button class="nav-tab-btn" data-tab="bloqueios">
-        <span>🔒</span> <span>Bloqueios & Período Letivo</span>
+
+      <!-- 3. Lista de Agendamentos (Público + Autenticado) -->
+      <button id="tab-btn-lista" class="nav-tab-btn" data-tab="lista">
+        <span>📋</span> <span>Lista de Agendamentos</span>
       </button>
+
+      <!-- 4. Pauta Diária (Restrito: Apenas Usuários Autorizados) -->
+      <button id="tab-btn-pauta" class="nav-tab-btn hidden" data-tab="pauta">
+        <span>📑</span> <span>Pauta Diária</span>
+      </button>
+
+      <!-- 5. Infraestrutura & Checklist (Restrito: Apenas Usuários Autorizados) -->
+      <button id="tab-btn-auditorios" class="nav-tab-btn hidden" data-tab="auditorios">
+        <span>🏢</span> <span>Infraestrutura & Checklist</span>
+      </button>
+
+      <!-- 6. Bloqueios & Período Letivo (Restrito: Apenas Usuários Autorizados) -->
+      <button id="tab-btn-bloqueios" class="nav-tab-btn hidden" data-tab="bloqueios">
+        <span>🔒</span> <span>Bloqueios</span>
+      </button>
+
+      <!-- 7. Pessoas Autorizadas (Restrito: Apenas Administrador Geral) -->
       <button id="tab-btn-usuarios" class="nav-tab-btn hidden" data-tab="usuarios">
         <span>👥</span> <span>Pessoas Autorizadas</span>
       </button>
@@ -192,8 +205,8 @@
   <!-- ================= CONTEÚDO PRINCIPAL ================= -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8">
 
-    <!-- ================= ABA 1: CALENDÁRIO ================= -->
-    <section id="tab-calendario" class="tab-content-section space-y-6">
+    <!-- ================= ABA: CALENDÁRIO ================= -->
+    <section id="tab-calendario" class="tab-content-section hidden space-y-6">
       
       <!-- Cabeçalho do Calendário com Filtros e Legendas -->
       <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
@@ -278,6 +291,7 @@
             <option value="todos">Todos os Status</option>
             <option value="confirmado">Confirmado</option>
             <option value="pendente">Pendente de Aprovação</option>
+            <option value="rejeitado">Recusado / Negado</option>
             <option value="cancelado">Cancelado</option>
           </select>
         </div>
@@ -329,8 +343,8 @@
 
     </section>
 
-    <!-- ================= ABA 4: NOVO AGENDAMENTO ================= -->
-    <section id="tab-novo" class="tab-content-section hidden max-w-3xl mx-auto space-y-6">
+    <!-- ================= ABA 1: NOVA RESERVA ================= -->
+    <section id="tab-novo" class="tab-content-section max-w-3xl mx-auto space-y-6">
       
       <div class="bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm">
         <div class="border-b border-slate-200 pb-4 mb-6">
@@ -1186,6 +1200,163 @@ firebase deploy</pre>
     </div>
   </div>
 
+  <!-- 7. MODAL NEGAR / RECUSAR RESERVA (COM JUSTIFICATIVA OBRIGATÓRIA) -->
+  <div id="modal-rejeitar-reserva" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-lg">
+      <div class="flex items-center justify-between border-b border-rose-200 pb-3 mb-4 bg-rose-50/50 -mx-6 sm:-mx-8 -mt-6 sm:-mt-8 px-6 sm:px-8 pt-6 rounded-t-xl">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">❌</span>
+          <h3 class="font-bold text-base text-rose-900">Negar / Recusar Solicitação de Reserva</h3>
+        </div>
+        <button type="button" onclick="appManager.closeModal('modal-rejeitar-reserva')" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div id="rejeitar-resumo-container" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1">
+          <!-- Renderizado dinamicamente -->
+        </div>
+
+        <div class="space-y-2">
+          <label class="block font-bold text-slate-800">
+            Justificativa / Motivo do Indeferimento <span class="text-rose-600">*</span>
+          </label>
+          <p class="text-[11px] text-slate-500">Este motivo será registrado oficialmente e enviado no corpo do e-mail ao solicitante.</p>
+
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            <button type="button" onclick="appManager.fillRejectMotivo('Choque com turmas regulares da graduação (SIGAA).')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition-colors">
+              Choque com Aulas SIGAA
+            </button>
+            <button type="button" onclick="appManager.fillRejectMotivo('Espaço em manutenção preventiva ou reparos estruturais.')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition-colors">
+              Manutenção Predial
+            </button>
+            <button type="button" onclick="appManager.fillRejectMotivo('Capacidade ou finalidade inadequada para as características do evento.')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition-colors">
+              Incompatibilidade de Capacidade
+            </button>
+            <button type="button" onclick="appManager.fillRejectMotivo('Espaço reservado para evento institucional prioritário da PRG / UFPB.')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition-colors">
+              Evento Institucional Prioritário
+            </button>
+            <button type="button" onclick="appManager.fillRejectMotivo('Solicitação fora dos prazos regimentais estabelecidos pela PRG.')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition-colors">
+              Fora do Prazo Regimental
+            </button>
+          </div>
+
+          <textarea id="rejeitar-motivo-input" rows="4" required placeholder="Descreva com clareza o motivo do indeferimento para orientar o interessado..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button type="button" onclick="appManager.closeModal('modal-rejeitar-reserva')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+            Voltar
+          </button>
+          <button type="button" id="btn-confirm-rejeitar" onclick="appManager.confirmRejectBooking()" class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors">
+            <span>✉️</span> <span>Confirmar Recusa e Notificar por E-mail</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. MODAL CANCELAR RESERVA (COM JUSTIFICATIVA) -->
+  <div id="modal-cancelar-reserva" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-lg">
+      <div class="flex items-center justify-between border-b border-amber-200 pb-3 mb-4 bg-amber-50/50 -mx-6 sm:-mx-8 -mt-6 sm:-mt-8 px-6 sm:px-8 pt-6 rounded-t-xl">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚠️</span>
+          <h3 class="font-bold text-base text-amber-900">Cancelar Agendamento de Reserva</h3>
+        </div>
+        <button type="button" onclick="appManager.closeModal('modal-cancelar-reserva')" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div id="cancelar-resumo-container" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1">
+          <!-- Renderizado dinamicamente -->
+        </div>
+
+        <div class="space-y-2">
+          <label class="block font-bold text-slate-800">
+            Motivo do Cancelamento <span class="text-amber-700">*</span>
+          </label>
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            <button type="button" onclick="appManager.fillCancelMotivo('Cancelamento a pedido do próprio solicitante.')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition-colors">
+              A Pedido do Solicitante
+            </button>
+            <button type="button" onclick="appManager.fillCancelMotivo('Interdição temporária do espaço para reparos emergenciais.')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition-colors">
+              Reparo Emergencial
+            </button>
+            <button type="button" onclick="appManager.fillCancelMotivo('Readequação de espaço físico pela Pró-Reitoria de Graduação.')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold border border-slate-300 transition-colors">
+              Readequação de Espaço PRG
+            </button>
+          </div>
+          <textarea id="cancelar-motivo-input" rows="3" required placeholder="Informe o motivo para registro e aviso ao solicitante..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button type="button" onclick="appManager.closeModal('modal-cancelar-reserva')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+            Voltar
+          </button>
+          <button type="button" id="btn-confirm-cancelar" onclick="appManager.confirmCancelBooking()" class="px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors">
+            <span>✉️</span> <span>Confirmar Cancelamento e Notificar por E-mail</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. MODAL INTERATIVO DE NOTIFICAÇÃO POR E-MAIL -->
+  <div id="modal-email-notificacao" class="modal-overlay">
+    <div class="modal-container p-6 sm:p-8 max-w-2xl">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">✉️</span>
+          <div>
+            <h3 class="font-bold text-base text-ufpb-blue">Notificação Oficial por E-mail</h3>
+            <p class="text-[11px] text-slate-500">Comunicação formal com o interessado via Agenda SisInfra / PRG</p>
+          </div>
+        </div>
+        <button type="button" onclick="appManager.closeModal('modal-email-notificacao')" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <div>
+            <span class="text-slate-500 font-semibold">Destinatário:</span>
+            <span id="email-modal-to" class="font-bold text-slate-900 ml-1"></span>
+          </div>
+          <span id="email-modal-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border"></span>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Assunto:</label>
+          <div id="email-modal-subject" class="font-mono font-bold text-xs text-blue-900 bg-blue-50/70 p-2.5 rounded-lg border border-blue-200"></div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Conteúdo da Mensagem:</label>
+          <textarea id="email-modal-body" rows="10" readonly class="w-full font-mono text-[11px] bg-slate-50 border border-slate-300 rounded-lg p-3 text-slate-800 leading-relaxed focus:outline-none"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <a id="email-modal-btn-gmail" href="#" target="_blank" class="px-3.5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors" title="Abrir no Gmail já preenchido">
+              <span>🚀</span> <span>Enviar via Gmail Web</span>
+            </a>
+            <a id="email-modal-btn-mailto" href="#" class="px-3.5 py-2 text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors" title="Abrir no Outlook ou cliente de e-mail padrão">
+              <span>✉️</span> <span>Abrir no Outlook / Mail</span>
+            </a>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="emailService.copyEmailText()" class="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg flex items-center gap-1.5 transition-colors" title="Copiar texto para área de transferência">
+              <span>📋</span> <span>Copiar Mensagem</span>
+            </button>
+            <button type="button" onclick="appManager.closeModal('modal-email-notificacao')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+              Concluir
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toast-container" class="no-print"></div>
 
@@ -1237,6 +1408,7 @@ firebase deploy</pre>
   <script src="js/sisinfra-data.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/email-service.js"></script>
   <script src="js/calendar.js"></script>
   <script src="js/app.js"></script>
 </body>

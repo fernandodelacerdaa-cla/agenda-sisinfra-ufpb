@@ -6,10 +6,12 @@
 
 class AppManager {
   constructor() {
-    this.currentTab = "calendario";
+    this.currentTab = "novo";
     this.editingBookingId = null;
     this.editingUserId = null;
     this.currentChecklistSpaceId = null;
+    this.currentRejectBookingId = null;
+    this.currentCancelBookingId = null;
     this.sisinfraSearchTerm = "";
     this.sisinfraFilterBloco = "todos";
     this.sisinfraFilterTipo = "todos";
@@ -73,6 +75,16 @@ class AppManager {
   }
 
   switchTab(tabName) {
+    const isLogged = window.authService.isLoggedIn();
+    const restrictedTabs = ["pauta", "auditorios", "bloqueios", "usuarios"];
+
+    // Trava de segurança: impede público geral de acessar abas de gestão
+    if (restrictedTabs.includes(tabName) && !isLogged) {
+      this.showToast("Acesso restrito à equipe autorizada da Central de Aulas e PRG.", "warning");
+      this.openModal("modal-login");
+      return;
+    }
+
     this.currentTab = tabName;
 
     document.querySelectorAll(".nav-tab-btn").forEach(btn => {
@@ -186,8 +198,13 @@ class AppManager {
     const unloggedContainer = document.getElementById("user-unlogged-container");
     const userNameEl = document.getElementById("user-name-display");
     const userBadgeEl = document.getElementById("user-badge-display");
-    const tabUsuariosBtn = document.getElementById("tab-btn-usuarios");
     const authAlertBooking = document.getElementById("auth-alert-booking");
+
+    // Abas com controle de acesso (Público x Equipe Autorizada)
+    const tabPautaBtn = document.getElementById("tab-btn-pauta");
+    const tabAuditoriosBtn = document.getElementById("tab-btn-auditorios");
+    const tabBloqueiosBtn = document.getElementById("tab-btn-bloqueios");
+    const tabUsuariosBtn = document.getElementById("tab-btn-usuarios");
 
     if (isLogged && user) {
       if (loggedContainer) loggedContainer.classList.remove("hidden");
@@ -204,6 +221,12 @@ class AppManager {
         }
       }
 
+      // Para equipe autorizada: exibe Pauta Diária, Infraestrutura e Bloqueios
+      if (tabPautaBtn) tabPautaBtn.classList.remove("hidden");
+      if (tabAuditoriosBtn) tabAuditoriosBtn.classList.remove("hidden");
+      if (tabBloqueiosBtn) tabBloqueiosBtn.classList.remove("hidden");
+
+      // Gestão de Pessoas Autorizadas: apenas Administrador Geral
       if (tabUsuariosBtn) {
         if (isAdmin) tabUsuariosBtn.classList.remove("hidden");
         else tabUsuariosBtn.classList.add("hidden");
@@ -211,10 +234,22 @@ class AppManager {
 
       if (authAlertBooking) authAlertBooking.classList.add("hidden");
     } else {
+      // Para o público em geral: somente Nova Reserva, Calendário e Lista de Agendamentos
       if (loggedContainer) loggedContainer.classList.add("hidden");
       if (unloggedContainer) unloggedContainer.classList.remove("hidden");
+
+      if (tabPautaBtn) tabPautaBtn.classList.add("hidden");
+      if (tabAuditoriosBtn) tabAuditoriosBtn.classList.add("hidden");
+      if (tabBloqueiosBtn) tabBloqueiosBtn.classList.add("hidden");
       if (tabUsuariosBtn) tabUsuariosBtn.classList.add("hidden");
+
       if (authAlertBooking) authAlertBooking.classList.remove("hidden");
+
+      // Se o visitante estiver numa aba restrita, redireciona para Nova Reserva
+      const restrictedTabs = ["pauta", "auditorios", "bloqueios", "usuarios"];
+      if (restrictedTabs.includes(this.currentTab)) {
+        this.switchTab("novo");
+      }
     }
   }
 
@@ -409,15 +444,24 @@ class AppManager {
         submitBtn.textContent = "Validando horário e salvando...";
 
         if (this.editingBookingId) {
-          await window.storageService.updateAgendamento(this.editingBookingId, bookingData);
+          const updated = await window.storageService.updateAgendamento(this.editingBookingId, bookingData);
           this.showToast("Agendamento atualizado com sucesso!", "success");
+          if (window.emailService) {
+            await window.emailService.notify("reserva_atualizada", updated);
+          }
           this.editingBookingId = null;
         } else {
-          await window.storageService.createAgendamento(bookingData);
+          const created = await window.storageService.createAgendamento(bookingData);
           if (isAuthorized) {
             this.showToast("Agendamento confirmado com sucesso na Agenda SisInfra!", "success");
+            if (window.emailService) {
+              await window.emailService.notify("reserva_confirmada", created);
+            }
           } else {
             this.showToast("Solicitação enviada com sucesso! Aguarde a análise da equipe SisInfra / PRG.", "info");
+            if (window.emailService) {
+              await window.emailService.notify("solicitacao_recebida", created);
+            }
           }
         }
 
@@ -545,6 +589,8 @@ class AppManager {
         badgeStatus = `<span class="badge-confirmado text-xs font-bold px-2.5 py-0.5 rounded-full">Confirmado</span>`;
       } else if (ag.status === "pendente") {
         badgeStatus = `<span class="badge-pendente text-xs font-bold px-2.5 py-0.5 rounded-full">Pendente</span>`;
+      } else if (ag.status === "rejeitado") {
+        badgeStatus = `<span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300">Negado</span>`;
       } else {
         badgeStatus = `<span class="badge-cancelado text-xs font-bold px-2.5 py-0.5 rounded-full">Cancelado</span>`;
       }
@@ -608,6 +654,8 @@ class AppManager {
       statusHtml = `<span class="badge-confirmado text-xs font-bold px-2.5 py-0.5 rounded-full">Confirmado</span>`;
     } else if (ag.status === "pendente") {
       statusHtml = `<span class="badge-pendente text-xs font-bold px-2.5 py-0.5 rounded-full">Pendente de Aprovação</span>`;
+    } else if (ag.status === "rejeitado") {
+      statusHtml = `<span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300">Negado / Recusado</span>`;
     } else {
       statusHtml = `<span class="badge-cancelado text-xs font-bold px-2.5 py-0.5 rounded-full">Cancelado</span>`;
     }
@@ -627,6 +675,26 @@ class AppManager {
           </div>
           <div>${statusHtml}</div>
         </div>
+
+        ${ag.status === 'rejeitado' ? `
+          <div class="bg-rose-50 border border-rose-300 p-3.5 rounded-xl text-rose-950">
+            <div class="flex items-center gap-1.5 font-bold mb-1 text-rose-900">
+              <span class="text-base">❌</span> <span>Solicitação de Reserva Indeferida / Recusada</span>
+            </div>
+            <p class="text-xs text-rose-900 leading-relaxed font-semibold">Justificativa da Gestão: "${this.escapeHtml(ag.motivoRejeicao || 'Não informada.')}"</p>
+            ${ag.rejeitadoEm ? `<div class="text-[10px] text-rose-700 mt-1">Registrado em ${new Date(ag.rejeitadoEm).toLocaleString('pt-BR')} por ${this.escapeHtml(ag.rejeitadoPor || '')}</div>` : ''}
+          </div>
+        ` : ''}
+
+        ${ag.status === 'cancelado' ? `
+          <div class="bg-amber-50 border border-amber-300 p-3.5 rounded-xl text-amber-950">
+            <div class="flex items-center gap-1.5 font-bold mb-1 text-amber-900">
+              <span class="text-base">⚠️</span> <span>Reserva Cancelada</span>
+            </div>
+            <p class="text-xs text-amber-900 leading-relaxed font-semibold">Motivo: "${this.escapeHtml(ag.motivoCancelamento || 'Cancelamento solicitado.')}"</p>
+            ${ag.canceladoEm ? `<div class="text-[10px] text-amber-700 mt-1">Registrado em ${new Date(ag.canceladoEm).toLocaleString('pt-BR')}</div>` : ''}
+          </div>
+        ` : ''}
 
         <div>
           <h3 class="text-lg font-bold text-ufpb-blue">${this.escapeHtml(ag.titulo)}</h3>
@@ -658,7 +726,7 @@ class AppManager {
             <div class="text-slate-500 text-[11px]">${this.escapeHtml(ag.departamento || "")}</div>
           </div>
           <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
-            <span class="text-slate-400 block font-semibold mb-1">Contato:</span>
+            <span class="text-slate-400 block font-semibold mb-1">Contato do Interessado:</span>
             <div class="text-slate-800 font-medium">✉️ ${this.escapeHtml(ag.email)}</div>
             <div class="text-slate-800 font-medium mt-0.5">📞 ${this.escapeHtml(ag.telefone || "Não informado")}</div>
           </div>
@@ -675,6 +743,24 @@ class AppManager {
             <p class="text-slate-700">${this.escapeHtml(ag.observacoes)}</p>
           </div>
         ` : ""}
+
+        <!-- Histórico de Notificações por E-mail -->
+        ${Array.isArray(ag.notificacoes) && ag.notificacoes.length > 0 ? `
+          <div class="border-t border-slate-200 pt-3">
+            <span class="text-slate-500 font-bold uppercase tracking-wider block mb-1.5">✉️ Notificações por E-mail Enviadas (${ag.notificacoes.length}):</span>
+            <div class="space-y-1.5">
+              ${ag.notificacoes.map(n => `
+                <div class="bg-slate-50 border border-slate-200 p-2 rounded-lg flex items-center justify-between text-[11px]">
+                  <div>
+                    <span class="font-bold text-slate-800">${this.escapeHtml(n.statusLabel || n.tipo)}</span>
+                    <span class="text-slate-500 block text-[10px]">Para: ${this.escapeHtml(n.destinatario)}</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400 font-mono">${new Date(n.data).toLocaleString("pt-BR")}</span>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        ` : ""}
       </div>
     `;
 
@@ -683,21 +769,31 @@ class AppManager {
 
     if (actions) {
       actions.innerHTML = `
-        <button onclick="appManager.printComprovante('${ag.id}')" class="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-1.5 transition-colors">
+        <button onclick="appManager.printComprovante('${ag.id}')" class="px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-1.5 transition-colors">
           🖨️ <span>Imprimir Comprovante</span>
         </button>
+
+        <button onclick="appManager.reopenEmailNotification('${ag.id}')" class="px-3 py-2 text-xs font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1.5 transition-colors" title="Visualizar / Reenviar e-mail de notificação">
+          ✉️ <span>Notificação por E-mail</span>
+        </button>
+
         ${canManage && ag.status === 'pendente' ? `
-          <button onclick="appManager.approveBooking('${ag.id}')" class="px-3.5 py-2 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
-            ✓ Aprovar Reserva
+          <button onclick="appManager.approveBooking('${ag.id}')" class="px-3.5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg flex items-center gap-1 shadow-sm transition-colors">
+            <span>✓</span> <span>Aprovar Reserva</span>
+          </button>
+          <button onclick="appManager.openRejectBookingModal('${ag.id}')" class="px-3.5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg flex items-center gap-1 shadow-sm transition-colors">
+            <span>✕</span> <span>Negar Reserva</span>
           </button>
         ` : ""}
-        ${canManage && ag.status !== 'cancelado' ? `
-          <button onclick="appManager.cancelBooking('${ag.id}')" class="px-3.5 py-2 text-xs font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors">
+
+        ${canManage && ag.status === 'confirmado' ? `
+          <button onclick="appManager.openCancelBookingModal('${ag.id}')" class="px-3.5 py-2 text-xs font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors">
             Cancelar Reserva
           </button>
         ` : ""}
+
         ${isAdmin ? `
-          <button onclick="appManager.deleteBooking('${ag.id}')" class="px-3.5 py-2 text-xs font-bold text-red-700 bg-red-100 hover:bg-red-200 rounded-lg ml-auto transition-colors">
+          <button onclick="appManager.deleteBooking('${ag.id}')" class="px-3 py-2 text-xs font-bold text-red-700 bg-red-100 hover:bg-red-200 rounded-lg ml-auto transition-colors">
             Excluir Registro
           </button>
         ` : ""}
@@ -744,22 +840,185 @@ class AppManager {
   }
 
   async approveBooking(id) {
-    await window.storageService.updateAgendamento(id, { status: "confirmado" });
+    const ag = await window.storageService.getAgendamentoById(id);
+    if (!ag) return;
+    const space = await window.storageService.getEspacoById(ag.auditorioId);
+
+    const updated = await window.storageService.updateAgendamento(id, { 
+      status: "confirmado",
+      aprovadoEm: new Date().toISOString(),
+      aprovadoPor: window.authService.getCurrentUser()?.email || "gestor@academico.ufpb.br"
+    });
+
     this.showToast("Agendamento aprovado com sucesso!", "success");
     this.closeModal("modal-booking-details");
+
+    // Dispara notificação de aprovação por e-mail para o interessado
+    if (window.emailService) {
+      await window.emailService.notify("reserva_aprovada", updated, { space });
+    }
+
     if (window.calendarManager) await window.calendarManager.render();
     await this.renderAgendamentosTable();
     await this.renderPautaDoDia();
   }
 
-  async cancelBooking(id) {
-    if (!confirm("Deseja realmente cancelar este agendamento? O horário ficará liberado para novos eventos.")) return;
-    await window.storageService.updateAgendamento(id, { status: "cancelado" });
-    this.showToast("Agendamento cancelado.", "info");
+  // ================= NEGAR / RECUSAR RESERVA =================
+  async openRejectBookingModal(id) {
+    const ag = await window.storageService.getAgendamentoById(id);
+    if (!ag) return;
+    this.currentRejectBookingId = id;
+
+    const space = await window.storageService.getEspacoById(ag.auditorioId);
+    const spaceName = space ? (space.nomeAmigavel || space.nome) : ag.auditorioId;
+    const [ano, mes, dia] = (ag.data || "").split("-");
+    const dataFormatada = (ano && mes && dia) ? `${dia}/${mes}/${ano}` : ag.data;
+
+    const resumo = document.getElementById("rejeitar-resumo-container");
+    if (resumo) {
+      resumo.innerHTML = `
+        <div class="font-bold text-slate-800 text-sm">${this.escapeHtml(ag.titulo)}</div>
+        <div class="text-slate-600">Espaço: <strong>${this.escapeHtml(spaceName)}</strong> • Data: <strong>${dataFormatada}</strong> (${ag.horaInicio} às ${ag.horaFim})</div>
+        <div class="text-slate-600">Interessado: <strong>${this.escapeHtml(ag.solicitante)}</strong> &lt;${this.escapeHtml(ag.email)}&gt;</div>
+      `;
+    }
+
+    const input = document.getElementById("rejeitar-motivo-input");
+    if (input) input.value = "";
+
     this.closeModal("modal-booking-details");
+    this.openModal("modal-rejeitar-reserva");
+  }
+
+  fillRejectMotivo(txt) {
+    const input = document.getElementById("rejeitar-motivo-input");
+    if (input) {
+      input.value = txt;
+      input.focus();
+    }
+  }
+
+  async confirmRejectBooking() {
+    const id = this.currentRejectBookingId;
+    if (!id) return;
+
+    const input = document.getElementById("rejeitar-motivo-input");
+    const motivo = (input?.value || "").trim();
+    if (!motivo) {
+      alert("Por favor, preencha a justificativa do indeferimento. Ela será enviada ao interessado.");
+      if (input) input.focus();
+      return;
+    }
+
+    const ag = await window.storageService.getAgendamentoById(id);
+    if (!ag) return;
+    const space = await window.storageService.getEspacoById(ag.auditorioId);
+
+    const updated = await window.storageService.updateAgendamento(id, {
+      status: "rejeitado",
+      motivoRejeicao: motivo,
+      rejeitadoEm: new Date().toISOString(),
+      rejeitadoPor: window.authService.getCurrentUser()?.email || "gestor@academico.ufpb.br"
+    });
+
+    this.closeModal("modal-rejeitar-reserva");
+    this.showToast("Solicitação de reserva indeferida.", "info");
+
+    // Dispara notificação de recusa por e-mail para o interessado com a justificativa
+    if (window.emailService) {
+      await window.emailService.notify("reserva_negada", updated, { space, motivo });
+    }
+
     if (window.calendarManager) await window.calendarManager.render();
     await this.renderAgendamentosTable();
     await this.renderPautaDoDia();
+  }
+
+  // ================= CANCELAR RESERVA =================
+  async openCancelBookingModal(id) {
+    const ag = await window.storageService.getAgendamentoById(id);
+    if (!ag) return;
+    this.currentCancelBookingId = id;
+
+    const space = await window.storageService.getEspacoById(ag.auditorioId);
+    const spaceName = space ? (space.nomeAmigavel || space.nome) : ag.auditorioId;
+    const [ano, mes, dia] = (ag.data || "").split("-");
+    const dataFormatada = (ano && mes && dia) ? `${dia}/${mes}/${ano}` : ag.data;
+
+    const resumo = document.getElementById("cancelar-resumo-container");
+    if (resumo) {
+      resumo.innerHTML = `
+        <div class="font-bold text-slate-800 text-sm">${this.escapeHtml(ag.titulo)}</div>
+        <div class="text-slate-600">Espaço: <strong>${this.escapeHtml(spaceName)}</strong> • Data: <strong>${dataFormatada}</strong> (${ag.horaInicio} às ${ag.horaFim})</div>
+        <div class="text-slate-600">Interessado: <strong>${this.escapeHtml(ag.solicitante)}</strong> &lt;${this.escapeHtml(ag.email)}&gt;</div>
+      `;
+    }
+
+    const input = document.getElementById("cancelar-motivo-input");
+    if (input) input.value = "";
+
+    this.closeModal("modal-booking-details");
+    this.openModal("modal-cancelar-reserva");
+  }
+
+  fillCancelMotivo(txt) {
+    const input = document.getElementById("cancelar-motivo-input");
+    if (input) {
+      input.value = txt;
+      input.focus();
+    }
+  }
+
+  async confirmCancelBooking() {
+    const id = this.currentCancelBookingId;
+    if (!id) return;
+
+    const input = document.getElementById("cancelar-motivo-input");
+    const motivo = (input?.value || "Cancelamento de reserva.").trim();
+
+    const ag = await window.storageService.getAgendamentoById(id);
+    if (!ag) return;
+    const space = await window.storageService.getEspacoById(ag.auditorioId);
+
+    const updated = await window.storageService.updateAgendamento(id, {
+      status: "cancelado",
+      motivoCancelamento: motivo,
+      canceladoEm: new Date().toISOString(),
+      canceladoPor: window.authService.getCurrentUser()?.email || "gestor@academico.ufpb.br"
+    });
+
+    this.closeModal("modal-cancelar-reserva");
+    this.showToast("Agendamento cancelado com sucesso.", "info");
+
+    // Dispara notificação de cancelamento por e-mail para o interessado
+    if (window.emailService) {
+      await window.emailService.notify("reserva_cancelada", updated, { space, motivo });
+    }
+
+    if (window.calendarManager) await window.calendarManager.render();
+    await this.renderAgendamentosTable();
+    await this.renderPautaDoDia();
+  }
+
+  // ================= REENVIAR / VISUALIZAR NOTIFICAÇÃO =================
+  async reopenEmailNotification(id) {
+    const ag = await window.storageService.getAgendamentoById(id);
+    if (!ag || !window.emailService) return;
+    const space = await window.storageService.getEspacoById(ag.auditorioId);
+
+    let situation = "solicitacao_recebida";
+    if (ag.status === "confirmado") situation = "reserva_confirmada";
+    else if (ag.status === "rejeitado") situation = "reserva_negada";
+    else if (ag.status === "cancelado") situation = "reserva_cancelada";
+
+    window.emailService.notify(situation, ag, {
+      space,
+      motivo: ag.motivoRejeicao || ag.motivoCancelamento
+    });
+  }
+
+  async cancelBooking(id) {
+    this.openCancelBookingModal(id);
   }
 
   async deleteBooking(id) {
@@ -788,7 +1047,7 @@ class AppManager {
 
     const targetDate = (dateInput && dateInput.value) ? dateInput.value : this.selectedDateForAgenda;
     const allAgendamentos = await window.storageService.getAgendamentos();
-    const dayEvents = allAgendamentos.filter(ag => ag.data === targetDate && ag.status !== "cancelado");
+    const dayEvents = allAgendamentos.filter(ag => ag.data === targetDate && ag.status !== "cancelado" && ag.status !== "rejeitado");
 
     const reservaveis = await window.storageService.getEspacosReservaveis();
 
@@ -1370,6 +1629,8 @@ class AppManager {
           <tr><th>E-mail / Contato</th><td>${this.escapeHtml(ag.email)} • ${this.escapeHtml(ag.telefone || "")}</td></tr>
           <tr><th>Recursos Solicitados</th><td>${ag.recursos ? ag.recursos.join(", ") : "Nenhum recurso extra"}</td></tr>
           <tr><th>Status da Reserva</th><td><strong>${ag.status.toUpperCase()}</strong></td></tr>
+          ${ag.motivoRejeicao ? `<tr><th>Justificativa da Recusa</th><td style="color:#b91c1c;"><strong>${this.escapeHtml(ag.motivoRejeicao)}</strong></td></tr>` : ''}
+          ${ag.motivoCancelamento ? `<tr><th>Motivo do Cancelamento</th><td style="color:#b45309;"><strong>${this.escapeHtml(ag.motivoCancelamento)}</strong></td></tr>` : ''}
         </table>
 
         <div class="terms">

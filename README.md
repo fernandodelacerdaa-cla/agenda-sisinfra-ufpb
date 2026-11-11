@@ -102,25 +102,43 @@ O sistema conta com um botão oficial **"Importar Dados SisInfra (CSV)"**:
 
 ---
 
-## 👥 Perfis de Acesso (@academico.ufpb.br)
+## 👥 Perfis de Acesso & Visibilidade por Perfil
 
-- **Gestor SisInfra / Administrador Geral (PRG):**
-  - Controle do checklist de equipamentos de todas as 102 salas.
-  - Habilitar/desabilitar permissão de reserva em qualquer espaço.
-  - Aprovar, criar, editar e cancelar reservas.
-  - Gestão de pessoas autorizadas (obrigatório e-mail `@academico.ufpb.br`).
-- **Operador (Equipe da Central de Aulas):**
-  - Criar e confirmar agendamentos imediatamente.
-  - Imprimir pauta diária e comprovantes oficiais com dados SisInfra.
-- **Público / Visitante:**
-  - Consultar disponibilidades em tempo real no calendário.
-  - Enviar solicitações (status *Pendente de Aprovação*).
+O menu da Agenda SisInfra é segmentado dinamicamente para preservar a segurança institucional:
+
+1. **Visão Pública / Visitante (Sem autenticação):**
+   - **➕ 1. Nova Reserva:** Formulário para submissão de solicitações (status *Pendente de Análise*).
+   - **📅 2. Calendário:** Consulta interativa de disponibilidade dos auditórios e salas.
+   - **📋 3. Lista de Agendamentos:** Visualização dos eventos confirmados e pendentes.
+   *(As demais abas ficam ocultas para o público externo).*
+
+2. **Equipe Autorizada da Central de Aulas e PRG (Operador / Gestor SisInfra):**
+   - **📑 4. Pauta Diária:** Controle diário de uso dos espaços para portaria e suporte técnico.
+   - **🏢 5. Infraestrutura & Checklist:** Gestão de equipamentos por sala (ativar/desativar datashows, som, etc.) e controle de reserva.
+   - **🔒 6. Bloqueios & Período Letivo:** Gestão de bloqueios de turnos de aula (2026.2, 2027.1, 2027.2) e manutenções.
+   - **👥 7. Pessoas Autorizadas:** Gestão de operadores (exclusivo para Administrador Geral com e-mail `@academico.ufpb.br`).
 
 ### 🔑 Contas de Demonstração para Testes Rápidos:
-| Perfil | E-mail Institucional | Senha |
-|---|---|---|
-| **Gestor SisInfra / Admin** | `admin@academico.ufpb.br` | `admin123` |
-| **Operador da Central** | `operador@academico.ufpb.br` | `operador123` |
+| Perfil | E-mail Institucional | Senha | Acesso |
+|---|---|---|---|
+| **Gestor SisInfra / Admin** | `admin@academico.ufpb.br` | `admin123` | Acesso total a todas as 7 abas |
+| **Operador da Central** | `operador@academico.ufpb.br` | `operador123` | Reservas, Pauta, Checklist e Bloqueios |
+| **Público Geral** | *Sem login* | *Sem login* | Nova Reserva, Calendário e Lista |
+
+---
+
+## ✉️ Sistema de Notificações Oficiais por E-mail
+
+Em conformidade com as diretrizes da PRG, o interessado é **notificado formalmente por e-mail em todas as situações**:
+
+1. **Solicitação Recebida (Público):** Protocolo oficial com código `#ID`, dados do espaço SisInfra, turno e orientações de análise.
+2. **Reserva Confirmada (Operador/Admin):** Confirmação imediata com orientações de uso e recursos garantidos.
+3. **Reserva Aprovada pelo Gestor:** Notificação de deferimento da solicitação com orientações de acesso.
+4. **Reserva Negada / Recusada:** Notificação com **justificativa obrigatória da gestão** (motivos frequentes como choque com aulas SIGAA, manutenção predial, capacidade inadequada, etc.) e orientações para novas datas.
+5. **Reserva Cancelada:** Aviso formal com justificativa e liberação de horário.
+6. **Reserva Atualizada:** Notificação de alteração de horário ou sala.
+
+> **Envio e Pré-visualização:** O sistema disponibiliza envio direto com 1 clique para o **Gmail Web** (com assunto e corpo preenchidos), cliente padrão (**Outlook / Mail** via `mailto`), cópia do texto e suporte integrado à API do **EmailJS** para envio automático em segundo plano. Histórico de notificações registrado em cada agendamento.
 
 ---
 

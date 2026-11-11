@@ -151,7 +151,7 @@ class CalendarManager {
 
     // Filtra agendamentos por espaço selecionado
     const agendamentos = allAgendamentos.filter(ag => {
-      if (ag.status === "cancelado") return false;
+      if (ag.status === "cancelado" || ag.status === "rejeitado") return false;
       const normalized = window.storageService.normalizeSpaceId(ag.auditorioId);
       if (this.selectedAuditorio !== "todos" && normalized !== String(this.selectedAuditorio)) {
         return false;
