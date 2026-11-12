@@ -41,32 +41,61 @@ Este sistema compartilha a máquina física (`sisinfra.ufpb.br`) com o sistema p
 
 ---
 
-## 3. Como Testar Localmente e Fazer Deploy
+## 3. Fluxo Obrigatório de Trabalho (Local ➔ Teste Local ➔ GitHub ➔ Script no Servidor)
 
-### Teste Local (Windows / Mac / Linux):
+> **REGRA DE OURO PARA A IA E PARA O DESENVOLVEDOR:**
+> **JAMAIS edite arquivos diretamente no servidor da UFPB** (via SSH, `nano`, `vim`, `scp` ou comandos remotos). Editar arquivos no servidor suja o repositório Git de produção e trava as atualizações futuras.
+> Todo o trabalho deve seguir obrigatoriamente as **4 etapas abaixo, sempre nesta ordem**:
+
+```
+[1. Editar no PC Local] ➔ [2. Testar em localhost:3001] ➔ [3. Enviar ao GitHub] ➔ [4. Rodar ./atualizar-agenda.sh no Servidor]
+```
+
+### Etapa 1 — Fazer as edições na máquina local
+Toda alteração de telas (`index.html`, `admin.html`, `css/`), regras de front-end (`js/`) ou rotas de back-end (`server.js`) deve ser feita **exclusivamente na pasta local do computador**.
+
+### Etapa 2 — Testar localmente na máquina antes de subir
+Antes de fazer commit ou enviar para o GitHub, inicie o servidor local para validar as alterações:
 ```bash
 node --no-warnings server.js
 ```
-Acesse `http://localhost:3001`.
+1. Abra no navegador local: **`http://localhost:3001`** (e **`http://localhost:3001/admin.html`**).
+2. Verifique se a funcionalidade nova está correta e se a API local responde em `http://localhost:3001/api/health`.
+3. Só avance para a Etapa 3 depois de confirmar que tudo funcionou localmente sem erros.
 
-### Deploy Seguro para Produção (`sisinfra.ufpb.br/agenda/`):
-1. Na máquina local, valide as alterações, faça o commit e envie ao GitHub:
-   ```bash
-   git add .
-   git commit -m "feat: descricao da melhoria"
-   git push origin main
-   ```
-2. Conectado na VPN da UFPB, execute **apenas o script oficial de atualização** com o usuário `agenda`:
-   ```bash
-   ssh agenda@150.165.130.3 "./agenda-prg/atualizar-agenda.sh"
-   ```
-   *(O script faz backup íntegro do SQLite em `backups/`, cria tag Git de retorno, puxa o código, reinicia o processo `agenda-prg` na porta `3001` e testa `/api/health`. Se algo falhar, ele reverte sozinho).*
+### Etapa 3 — Salvar no Git e enviar para o GitHub (`git push`)
+Com a alteração testada e aprovada na máquina local, envie o código para o GitHub:
+```bash
+git status -s
+git add .
+git commit -m "feat: descricao clara da melhoria"
+git push origin main
+```
+*(Lembrete: nunca force o envio da pasta `dados/` ou `backups/` — o banco local de testes nunca deve ir para o GitHub).*
 
-### Como Reverter em Caso de Problema (Rollback):
+### Etapa 4 — Atualizar o servidor da UFPB usando o script oficial
+Com o código já no GitHub e a **VPN da UFPB conectada**, **não** rode `git pull` ou `pm2 restart` manualmente no servidor. Execute sempre o script oficial de deploy seguro:
+```bash
+ssh agenda@150.165.130.3 "./agenda-prg/atualizar-agenda.sh"
+```
+**O que este script faz sozinho no servidor:**
+1. Cria um backup íntegro a quente do banco SQLite de produção em `/home/agenda/agenda-prg/backups/agenda_DATA_HORA.db`.
+2. Cria uma tag Git (`backup-antes-deploy-DATA_HORA`) guardando o estado anterior exato.
+3. Puxa do GitHub as atualizações que você acabou de enviar (`git pull --ff-only origin main`).
+4. Reinicia apenas o processo `agenda-prg` (porta `3001`) no PM2 do usuário `agenda`.
+5. Testa automaticamente `http://127.0.0.1:3001/api/health`. Se houver qualquer falha, **ele desfaz a atualização sozinho** na mesma hora.
+
+---
+
+## 4. Botão de Pânico: Como Reverter em Caso de Problema (Rollback)
+
+Se após atualizar o servidor você notar que algo visual ou funcional não ficou como esperado, basta rodar da sua máquina **apenas o comando de reversão**:
 ```bash
 ssh agenda@150.165.130.3 "./agenda-prg/reverter-agenda.sh"
 ```
-Para voltar também o banco de dados ao estado exato de antes da atualização:
+*(Volta o código imediatamente para a versão anterior ao último deploy e reinicia a Agenda em 2 segundos, mantendo os agendamentos salvos).*
+
+Para voltar o código **e também** restaurar o banco SQLite ao backup criado imediatamente antes do deploy:
 ```bash
 ssh agenda@150.165.130.3 "./agenda-prg/reverter-agenda.sh --com-banco"
 ```
