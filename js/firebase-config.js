@@ -1,8 +1,16 @@
 /**
  * SISTEMA DE AGENDAMENTO DE AUDITÓRIOS - CENTRAL DE AULAS (PRG / UFPB)
- * Configuração do Firebase & Detecção Automática
- * 
- * INSTRUÇÕES:
+ * [ARQUIVO LEGADO INATIVO — MANTIDO APENAS PARA PRESERVAÇÃO DA ESTRUTURA ORIGINAL]
+ *
+ * ⚠️ AVISO IMPORTANTE DE ARQUITETURA:
+ * O banco de dados oficial da Agenda PRG foi migrado para SQLite relacional (`dados/agenda.db`)
+ * através do back-end nativo em Node.js 22 (`server.js`), respondendo pelas rotas `./api/...`.
+ *
+ * Este arquivo (`js/firebase-config.js`), bem como `firebase.json`, `firestore.rules` e
+ * `firestore.indexes.json`, foram mantidos no repositório apenas para que o autor original
+ * reconheça integralmente sua estrutura inicial e possa removê-los quando desejar.
+ *
+ * INSTRUÇÕES ORIGINAIS (LEGADO FIREBASE):
  * 1. Crie um projeto no console do Firebase: https://console.firebase.google.com/
  * 2. Em "Configurações do Projeto" > "Geral" > "Seus aplicativos", crie um app Web (</>).
  * 3. Copie as credenciais e substitua no objeto firebaseConfig abaixo.
@@ -46,7 +54,7 @@ try {
     window.isFirebaseActive = true;
     console.log("✅ Conectado com sucesso ao Firebase!");
   } else {
-    console.info("ℹ️ Firebase não configurado. Rodando em Modo Demonstração com LocalStorage.");
+    console.info("ℹ️ [Legado Firebase Inativo] A Agenda PRG opera oficialmente com Back-end Node.js 22 + Banco Relacional SQLite (./api/... via server.js). Os arquivos do Firebase foram mantidos apenas para preservação da estrutura original.");
     window.isFirebaseActive = false;
   }
 } catch (error) {

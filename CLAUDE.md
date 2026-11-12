@@ -39,6 +39,10 @@ Este sistema compartilha a máquina física (`sisinfra.ufpb.br`) com o sistema p
   - Visitantes sem login podem enviar solicitações de reserva (`POST ./api/agendamentos`), mas o servidor força `status: "pendente"` até que um operador ou administrador aprove no painel.
   - Operações administrativas (aprovar, confirmar direto, editar, excluir, gerenciar espaços/bloqueios/usuários) exigem token de sessão (`Authorization: Bearer <token>`) validado no `server.js`.
 
+- **⚠️ Atenção sobre Resquícios Legados do Firebase (Inativos):**
+  - Os arquivos `firebase.json`, `firestore.rules`, `firestore.indexes.json`, `js/firebase-config.js` e os elementos visuais/scripts de Firebase em `index.html` (linhas 36–39, 157–160, 871–906 e 1407) são **resquícios legados da primeira versão estática** e foram mantidos intencionalmente para que o autor original reconheça sua estrutura inicial.
+  - **Regra para a IA:** **NUNCA** tente usar, configurar ou reativar o Firebase. Toda persistência oficial de dados e autenticação da Agenda PRG ocorre exclusivamente no banco relacional **SQLite (`dados/agenda.db`)** via `server.js` e rotas `./api/...`. Caso o desenvolvedor solicite a limpeza desses resquícios no futuro, eles podem ser removidos com segurança conforme mapeado no `README.md`.
+
 ---
 
 ## 3. Fluxo Obrigatório de Trabalho (Local ➔ Teste Local ➔ GitHub ➔ Script no Servidor)

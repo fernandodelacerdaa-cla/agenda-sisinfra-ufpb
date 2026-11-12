@@ -4,17 +4,28 @@ Este guia explica como rodar a **Agenda de Espaços Acadêmicos da PRG** no seu 
 
 ---
 
-## 1. O que foi configurado na arquitetura
+## 1. O que foi configurado na arquitetura (Mapa de Alterações)
 
 1. **Banco de Dados Relacional Real (SQLite):**
-   - Antes, os dados ficavam salvos apenas no navegador de cada pessoa (`localStorage`).
-   - Agora, o arquivo `server.js` usa o banco relacional nativo do Node.js 22 (`node:sqlite`), gravando tudo em `dados/agenda.db` no servidor.
+   - Antes, os dados ficavam salvos apenas no navegador de cada pessoa (`localStorage`) ou dependiam de configuração futura no Firebase.
+   - Agora, o arquivo `server.js` usa o banco relacional nativo do Node.js 22 (`node:sqlite`), gravando tudo em `dados/agenda.db` no servidor (`https://sisinfra.ufpb.br/agenda/`).
    - As **102 salas e auditórios da PRG**, os **calendários letivos (2026.2, 2027.1 e 2027.2)** e os **agendamentos** ficam centralizados no servidor: qualquer reserva ou aprovação feita na PRG aparece imediatamente para todos os usuários.
 2. **Trava de Conflito de Horário no Servidor:**
    - Quando duas pessoas tentam reservar o mesmo auditório/sala no mesmo dia e horário ao mesmo tempo, o banco abre uma transação atômica (`BEGIN IMMEDIATE`), grava a primeira e recusa a segunda (`HTTP 409 - Conflito de Horário`).
-3. **Isolamento Total:**
-   - A Agenda roda na porta interna `3001`, em um usuário Linux exclusivo (`agenda`), na pasta `/home/agenda/agenda-prg`.
+3. **Autenticação Segura (`scrypt` + Token HMAC):**
+   - As senhas dos operadores e administradores são protegidas com hash criptográfico `scrypt` no banco SQLite, e as ações de gestão exigem token de sessão validado no `server.js`.
+4. **Isolamento Total:**
+   - A Agenda roda na porta interna `127.0.0.1:3001`, em um usuário Linux exclusivo (`agenda`), na pasta `/home/agenda/agenda-prg`.
    - O banco de dados (`dados/agenda.db`) **não vai para o GitHub** (está protegido no `.gitignore`), garantindo que uma atualização de tela ou código nunca apague os agendamentos já cadastrados no servidor.
+
+### Resumo dos Arquivos: O que é Novo, o que foi Adaptado e o que é Legado Firebase
+
+| Categoria | Arquivos | Função / Observação |
+|---|---|---|
+| **1. Arquivos Novos (Back-end, Banco e Automação)** | `server.js`, `package.json`, `.gitignore`, `.gitattributes`, `atualizar-agenda.sh`, `reverter-agenda.sh`, `DEPLOY.md`, `CLAUDE.md` | Servidor Node.js 22, banco SQLite (`dados/agenda.db`), trava anti-conflito e scripts de deploy/rollback seguros. |
+| **2. Arquivos Originais Adaptados** | `js/storage.js`, `js/auth.js` | Conectados à API REST (`./api/...`) do `server.js` para ler e gravar no SQLite (mantendo `localStorage` apenas como *fallback* offline). |
+| **3. Front-end Original Intocado** | `index.html`, `admin.html`, `css/styles.css`, `js/app.js`, `js/admin.js`, `js/sisinfra-data.js`, `js/email-service.js` | Interface institucional, catálogo das 102 salas e regras visuais originais. |
+| **4. Resquícios Legados do Firebase (Inativos)** | `firebase.json`, `firestore.rules`, `firestore.indexes.json`, `js/firebase-config.js` e referências em `index.html` (linhas 36–39, 157–160, 871–906 e 1407) | **Mantidos intencionalmente** para que o autor original reconheça toda a estrutura que criou. **Estão inativos** (pois o banco oficial agora é o SQLite) e podem ser removidos quando desejar. |
 
 ---
 

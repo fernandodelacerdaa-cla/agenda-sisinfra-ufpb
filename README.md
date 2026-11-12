@@ -2,7 +2,40 @@
 
 Sistema web completo para gestão, controle de checklist de equipamentos, consulta e agendamento dos auditórios, salas de reunião e instalações sob gestão da **Pró-Reitoria de Graduação (PRG)** da **Universidade Federal da Paraíba (UFPB)**.
 
-Integrado ao catálogo oficial de infraestrutura da UFPB: **[sisinfra.ufpb.br](https://sisinfra.ufpb.br)**.
+Integrado ao catálogo oficial de infraestrutura da UFPB: **[sisinfra.ufpb.br](https://sisinfra.ufpb.br)** e publicado oficialmente em **[sisinfra.ufpb.br/agenda/](https://sisinfra.ufpb.br/agenda/)**.
+
+---
+
+## 🚀 Arquitetura de Produção UFPB: Back-end Node.js 22 + Banco Relacional SQLite
+
+Originalmente concebido como uma aplicação front-end estática (com modo de demonstração em `localStorage` e estrutura preparatória para Firebase), o projeto recebeu uma **evolução arquitetural completa** para operar de forma 100% autônoma, centralizada e segura dentro do servidor institucional da UFPB (`https://sisinfra.ufpb.br/agenda/`), **sem depender de serviços externos pagos ou de configuração de nuvem de terceiros**.
+
+### 1. O que foi criado (Arquivos Novos)
+- **[`server.js`](./server.js) — Servidor Back-end e API REST (Node.js 22 Nativo):**
+  - Construído exclusivamente com módulos nativos do Node.js 22 (`node:http`, `node:sqlite`, `node:crypto`, `node:fs`), com **zero dependências externas (`npm`)**, garantindo máxima estabilidade e manutenção simples.
+  - Expõe a API REST sob `./api/...` (`GET/POST/PUT/DELETE`) e serve os arquivos estáticos da Agenda na porta interna `127.0.0.1:3001`.
+- **Banco de Dados Relacional Oficial (`dados/agenda.db` — SQLite em modo WAL):**
+  - Substitui definitivamente o `localStorage` e a necessidade do Firebase. Todos os dados ficam centralizados no servidor da UFPB em 4 tabelas relacionais:
+    1. `espacos` (102 instalações da PRG catalogadas no SisInfra, com checklist e status de reserva).
+    2. `usuarios` (administradores e operadores autorizados).
+    3. `bloqueios` (calendários letivos 2026.2, 2027.1, 2027.2 e bloqueios administrativos).
+    4. `agendamentos` (solicitações públicas, reservas confirmadas e histórico de notificações).
+  - **Auto-Seeding (Carga Inicial Automática):** Na primeira execução, se `dados/agenda.db` ainda não existir, o `server.js` lê automaticamente [`js/sisinfra-data.js`](./js/sisinfra-data.js) e popula as 102 salas, os 12 bloqueios letivos e as contas iniciais.
+  - **Proteção no Git (`.gitignore`):** A pasta `dados/` e a pasta `backups/` não são enviadas ao GitHub para garantir que um `git pull` ou atualização visual nunca sobrescreva os agendamentos reais já gravados em produção.
+- **Trava Transacional Anti-Conflito no Servidor (`BEGIN IMMEDIATE`):**
+  - Antes de gravar ou alterar qualquer reserva, o banco abre uma transação atômica exclusiva (`BEGIN IMMEDIATE`) e verifica no SQLite se já existe reserva ativa no mesmo espaço, data e faixa de horário (`horaInicio < fim AND horaFim > inicio`). Caso duas pessoas cliquem no mesmo segundo, a primeira reserva é gravada e a segunda recebe imediatamente `HTTP 409 (Conflito de Horário)`.
+- **Segurança Institucional (`scrypt` + Token HMAC + RBAC):**
+  - Senhas de operadores e administradores são gravadas com hash criptográfico `scrypt` + `salt` aleatório.
+  - O login (`POST ./api/auth/login`) emite um token assinado via HMAC-SHA256. Visitantes sem login podem apenas consultar a agenda e enviar solicitações com status forçado para `pendente`; aprovações, bloqueios e edições exigem token válido de operador ou administrador.
+- **Scripts de Deploy Seguro e Rollback Instantâneo:**
+  - **[`atualizar-agenda.sh`](./atualizar-agenda.sh):** Faz backup íntegro a quente do banco SQLite (`VACUUM INTO`), cria tag de segurança no Git, baixa o código novo do GitHub, reinicia o serviço e testa `/api/health` (revertendo sozinho em caso de erro).
+  - **[`reverter-agenda.sh`](./reverter-agenda.sh):** Botão de pânico que volta o código (e opcionalmente o banco, com `--com-banco`) ao estado anterior em 2 segundos.
+  - **[`DEPLOY.md`](./DEPLOY.md) e [`CLAUDE.md`](./CLAUDE.md):** Manuais completos de operação passo a passo para o desenvolvedor e regras de segurança para assistentes de IA.
+
+### 2. O que foi adaptado nos arquivos originais
+- **[`js/storage.js`](./js/storage.js):** Foi conectado à API REST (`./api/espacos`, `./api/agendamentos`, `./api/bloqueios`, `./api/usuarios`). Todas as leituras, criações, aprovações, edições, exclusões e importações de CSV agora gravam diretamente no banco SQLite do servidor (mantendo o `localStorage` apenas como *fallback* offline caso alguém abra o arquivo HTML fora do servidor).
+- **[`js/auth.js`](./js/auth.js):** Foi conectado às rotas `./api/auth/login` e `./api/auth/me`, validando credenciais e sessões diretamente no servidor Node.js + SQLite.
+- **Demais arquivos do Front-end (`index.html`, `admin.html`, `css/styles.css`, `js/app.js`, `js/admin.js`, `js/sisinfra-data.js`, `js/email-service.js`):** Mantidos com sua estrutura e identidade originais.
 
 ---
 
@@ -160,24 +193,38 @@ Se houver choque de horário no mesmo espaço, a gravação é bloqueada imediat
 
 ---
 
-## 🚀 Como Testar Localmente
+## 🚀 Como Testar Localmente e Atualizar o Servidor
 
-Basta abrir o arquivo `index.html` em qualquer navegador.
-O sistema opera automaticamente em modo de demonstração via `localStorage`, sem necessidade de compilação ou instalação prévia.
+Para rodar o sistema completo na sua máquina (com o servidor Node.js 22 e o banco de dados relacional SQLite ativo):
+
+```bash
+node --no-warnings server.js
+```
+
+Em seguida, acesse no navegador:
+- **Página Pública / Calendário:** `http://localhost:3001`
+- **Painel Administrativo:** `http://localhost:3001/admin.html`
+- **Saúde da API e Banco SQLite:** `http://localhost:3001/api/health`
+
+*(Na primeira execução local, o arquivo `dados/agenda.db` será criado automaticamente já com as 102 salas da PRG e os calendários letivos. Para publicar atualizações no servidor da UFPB com backup automático, consulte o guia passo a passo em **[`DEPLOY.md`](./DEPLOY.md)**).*
 
 ---
 
-## ☁️ Publicação no Firebase
+## ⚠️ Nota sobre Resquícios do Firebase (Mantidos Intencionalmente como Legado Inativo)
 
-```bash
-# 1. Login no Firebase
-firebase login
+Para preservar 100% da familiaridade com a estrutura originalmente criada pelo autor do projeto, **nenhum arquivo ou elemento visual da tentativa inicial com Firebase foi apagado à força**. 
 
-# 2. Vincular ao seu projeto
-firebase use --add seu-projeto-id
+Contudo, **o Firebase está inativo e NÃO é utilizado**, pois o banco de dados oficial agora é o **SQLite (`dados/agenda.db`)** gerenciado pelo back-end **`server.js`**.
 
-# 3. Publicar
-firebase deploy
-```
+Caso deseje fazer uma limpeza futura no repositório, abaixo está o **mapa exato de todos os resquícios do Firebase** que podem ser removidos ou ocultados a qualquer momento sem afetar o funcionamento do sistema:
 
-O site estará acessível com HTTPS em `https://seu-projeto-id.web.app`.
+| Local / Arquivo | Descrição do Resquício Legado | Status Atual |
+|---|---|---|
+| [`firebase.json`](./firebase.json) | Configuração antiga do Firebase Hosting | **Inativo** (o deploy oficial usa Nginx + PM2 via `atualizar-agenda.sh`) |
+| [`firestore.rules`](./firestore.rules) | Regras de segurança do Cloud Firestore | **Inativo** (o controle de acesso real é feito no `server.js`) |
+| [`firestore.indexes.json`](./firestore.indexes.json) | Índices do Cloud Firestore | **Inativo** (os índices reais estão no SQLite dentro do `server.js`) |
+| [`js/firebase-config.js`](./js/firebase-config.js) | Script de inicialização com placeholders (`"SUA_API_KEY_AQUI"`) | **Inativo** (`window.isFirebaseActive` permanece sempre `false`) |
+| [`index.html` (linhas 36–39)](./index.html#L36-L39) | Tags `<script>` carregando o SDK do Firebase (`gstatic.com`) | **Inativo** (pode ser removido do `<head>`) |
+| [`index.html` (linhas 157–160)](./index.html#L157-L160) | Botão `⚙️ Firebase / Deploy` na barra superior | **Apenas informativo** (abre o modal de ajuda do Firebase) |
+| [`index.html` (linhas 871–906)](./index.html#L871-L906) | Modal `<div id="modal-firebase-help">` (*"Como Publicar no Firebase"*) | **Apenas informativo** (pode ser removido junto com o botão) |
+| [`index.html` (linha 1407)](./index.html#L1407) | Tag `<script src="js/firebase-config.js"></script>` | **Inativo** (apenas exibe aviso no console F12 informando o uso do SQLite) |
